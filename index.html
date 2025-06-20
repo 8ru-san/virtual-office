@@ -35,6 +35,12 @@
     
     <script>
         // ゲームの基本設定
+       // Firebase Database の取得
+        import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        
+        const database = getDatabase();
+        
+        // ゲームの基本設定
         const config = {
             type: Phaser.AUTO,
             width: 800,
@@ -50,21 +56,47 @@
 
         let player;
         let cursors;
+        let otherPlayers = {}; // 他のプレイヤーを管理
+        let playerId;
 
         function preload() {
-            // シンプルな四角形のアバターを作成
+            // シンプルな四角形のアバターを複数色で作成
             this.add.graphics()
                 .fillStyle(0xff6b6b)
                 .fillRect(0, 0, 32, 48)
-                .generateTexture('player', 32, 48);
+                .generateTexture('player-red', 32, 48);
+                
+            this.add.graphics()
+                .fillStyle(0x6bcf7f)
+                .fillRect(0, 0, 32, 48)
+                .generateTexture('player-green', 32, 48);
+                
+            this.add.graphics()
+                .fillStyle(0x4dabf7)
+                .fillRect(0, 0, 32, 48)
+                .generateTexture('player-blue', 32, 48);
+                
+            this.add.graphics()
+                .fillStyle(0xffd93d)
+                .fillRect(0, 0, 32, 48)
+                .generateTexture('player-yellow', 32, 48);
         }
 
         function create() {
             // 背景に芝生っぽい感じを追加
             this.add.rectangle(400, 550, 800, 100, 0x90EE90);
             
+            // ユニークなプレイヤーIDを生成
+            playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+            
+            // ランダムな色を選択
+            const colors = ['red', 'green', 'blue', 'yellow'];
+            const playerColor = colors[Math.floor(Math.random() * colors.length)];
+            
             // プレイヤー（アバター）を作成
-            player = this.add.sprite(400, 300, 'player');
+            player = this.add.sprite(400, 300, 'player-' + playerColor);
+            player.playerId = playerId;
+            player.playerColor = playerColor;
             
             // キーボード入力を設定
             cursors = this.input.keyboard.createCursorKeys();
@@ -74,32 +106,111 @@
                 fontSize: '24px',
                 color: '#333'
             });
+            
+            this.add.text(10, 40, '他のメンバーが参加すると表示されます', {
+                fontSize: '16px',
+                color: '#666'
+            });
+            
+            // Firebaseで他のプレイヤーの位置を監視
+            const playersRef = ref(database, 'players');
+            onValue(playersRef, (snapshot) => {
+                const players = snapshot.val();
+                if (players) {
+                    Object.keys(players).forEach(id => {
+                        if (id !== playerId) {
+                            updateOtherPlayer.call(this, id, players[id]);
+                        }
+                    });
+                    
+                    // 存在しないプレイヤーを削除
+                    Object.keys(otherPlayers).forEach(id => {
+                        if (!players[id]) {
+                            if (otherPlayers[id]) {
+                                otherPlayers[id].destroy();
+                                delete otherPlayers[id];
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateOtherPlayer(id, data) {
+            if (!otherPlayers[id]) {
+                // 新しいプレイヤーを作成
+                otherPlayers[id] = this.add.sprite(data.x, data.y, 'player-' + data.color);
+                otherPlayers[id].setAlpha(0.8); // 少し透明にして区別
+            } else {
+                // 既存のプレイヤーの位置を更新
+                otherPlayers[id].x = data.x;
+                otherPlayers[id].y = data.y;
+            }
         }
 
         function update() {
             // プレイヤーの移動処理
             const speed = 3;
+            let moved = false;
             
             if (cursors.left.isDown) {
                 player.x -= speed;
+                moved = true;
             }
             if (cursors.right.isDown) {
                 player.x += speed;
+                moved = true;
             }
             if (cursors.up.isDown) {
                 player.y -= speed;
+                moved = true;
             }
             if (cursors.down.isDown) {
                 player.y += speed;
+                moved = true;
             }
             
             // 画面外に出ないように制限
             player.x = Phaser.Math.Clamp(player.x, 16, 784);
             player.y = Phaser.Math.Clamp(player.y, 24, 576);
+            
+            // 動いた場合、Firebaseに位置を送信
+            if (moved) {
+                const playerRef = ref(database, 'players/' + playerId);
+                set(playerRef, {
+                    x: player.x,
+                    y: player.y,
+                    color: player.playerColor,
+                    timestamp: Date.now()
+                });
+            }
         }
 
         // ゲームを開始
         const game = new Phaser.Game(config);
     </script>
+</body>
+</html>
+    </script>
+    <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4i0HfjD3Bxnv80TCm7icQ6e20jss1ATs",
+    authDomain: "virtual-office-40ff8.firebaseapp.com",
+    databaseURL: "https://virtual-office-40ff8-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "virtual-office-40ff8",
+    storageBucket: "virtual-office-40ff8.firebasestorage.app",
+    messagingSenderId: "113452355413",
+    appId: "1:113452355413:web:1e35e9d49282710171e9dc"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
 </body>
 </html>
