@@ -5,61 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>バーチャル純喫茶</title>
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
             font-family: 'Georgia', serif;
-            min-height: 100vh;
+            overflow: hidden;
+            background: #8B4513;
         }
         #game-container {
-            border: 4px solid #8B4513;
-            border-radius: 15px;
-            margin: 0 auto;
+            width: 100vw;
+            height: 100vh;
             display: block;
-            box-shadow: 0 15px 35px rgba(139, 69, 19, 0.4);
-            overflow: hidden;
         }
-        h1 {
-            text-align: center;
-            color: #8B4513;
-            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
-            margin-bottom: 10px;
-            font-family: 'Georgia', serif;
-            font-size: 32px;
+        canvas {
+            display: block;
+            margin: 0 auto;
         }
-        p {
-            text-align: center;
-            color: #654321;
-            margin-bottom: 20px;
-            font-style: italic;
+        .ui-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(139, 69, 19, 0.8);
+            color: #F5DEB3;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
         }
-        .info-panel {
-            background: rgba(255, 248, 220, 0.9);
-            border: 2px solid #8B4513;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px auto;
-            max-width: 800px;
-            text-align: center;
-            box-shadow: inset 0 2px 5px rgba(139, 69, 19, 0.2);
-        }
-        .cafe-title {
-            color: #8B4513;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 10px;
+        .controls-hint {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(139, 69, 19, 0.8);
+            color: #F5DEB3;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            z-index: 1000;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <h1>☕ バーチャル純喫茶</h1>
-    <p>ゆったりとした時間を過ごす憩いの場</p>
+    <div class="ui-overlay">
+        <div>☕ 純喫茶「憩」</div>
+        <div>お客様: <span id="customer-count">1</span>名</div>
+    </div>
     
-    <div class="info-panel">
-        <div class="cafe-title">🏛️ 昭和レトロな純喫茶空間</div>
-        矢印キーで移動して、お気に入りの席でくつろいでください<br>
-        <small>コーヒーの香りと共に、仲間との穏やかなひとときを</small>
+    <div class="controls-hint">
+        矢印キー: 移動
     </div>
     
     <!-- Phaser.jsをCDNから読み込み -->
@@ -85,165 +83,148 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        // ゲームの基本設定
+        // レスポンシブなゲーム設定
+        const gameWidth = window.innerWidth;
+        const gameHeight = window.innerHeight;
+        
         const config = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            backgroundColor: '#F5DEB3', // ベージュの温かい背景
+            width: gameWidth,
+            height: gameHeight,
+            backgroundColor: '#DEB887',
             parent: 'game-container',
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
             scene: {
                 preload: preload,
                 create: create,
-                update: update
+                update: update,
+                resize: resize
             }
         };
 
         let player;
         let cursors;
-        let otherPlayers = {}; // 他のプレイヤーを管理
+        let otherPlayers = {};
         let playerId;
+        let gameScene;
 
         function preload() {
-            // 純喫茶らしい優しい色合いのアバター
+            gameScene = this;
+            
+            // 俯瞰視点用のアバター（上から見た人の形）
             this.add.graphics()
-                .fillStyle(0x8B4513) // 茶色の服
-                .fillRect(6, 12, 20, 28)
-                .fillStyle(0xFFDBB3) // 肌色の顔
-                .fillCircle(16, 8, 8)
+                .fillStyle(0xFFDBB3) // 肌色（頭）
+                .fillCircle(16, 12, 8)
+                .fillStyle(0x8B4513) // 茶色の服（体）
+                .fillEllipse(16, 28, 16, 20)
                 .fillStyle(0x654321) // 髪
-                .fillCircle(16, 6, 9)
-                .generateTexture('customer-1', 32, 48);
+                .fillCircle(16, 10, 9)
+                .generateTexture('customer-top-1', 32, 40);
                 
             this.add.graphics()
+                .fillStyle(0xFFDBB3)
+                .fillCircle(16, 12, 8)
                 .fillStyle(0x2F4F2F) // 深緑の服
-                .fillRect(6, 12, 20, 28)
-                .fillStyle(0xFFDBB3) // 肌色の顔
-                .fillCircle(16, 8, 8)
+                .fillEllipse(16, 28, 16, 20)
                 .fillStyle(0x8B4513) // 茶髪
-                .fillCircle(16, 6, 9)
-                .generateTexture('customer-2', 32, 48);
+                .fillCircle(16, 10, 9)
+                .generateTexture('customer-top-2', 32, 40);
                 
             this.add.graphics()
+                .fillStyle(0xFFDBB3)
+                .fillCircle(16, 12, 8)
                 .fillStyle(0x483D8B) // 紺色の服
-                .fillRect(6, 12, 20, 28)
-                .fillStyle(0xFFDBB3) // 肌色の顔
-                .fillCircle(16, 8, 8)
+                .fillEllipse(16, 28, 16, 20)
                 .fillStyle(0x2F2F2F) // 黒髪
-                .fillCircle(16, 6, 9)
-                .generateTexture('customer-3', 32, 48);
+                .fillCircle(16, 10, 9)
+                .generateTexture('customer-top-3', 32, 40);
                 
             this.add.graphics()
+                .fillStyle(0xFFDBB3)
+                .fillCircle(16, 12, 8)
                 .fillStyle(0xB22222) // えんじ色の服
-                .fillRect(6, 12, 20, 28)
-                .fillStyle(0xFFDBB3) // 肌色の顔
-                .fillCircle(16, 8, 8)
-                .fillStyle(0x654321) // 茶髪
-                .fillCircle(16, 6, 9)
-                .generateTexture('customer-4', 32, 48);
+                .fillEllipse(16, 28, 16, 20)
+                .fillStyle(0x654321)
+                .fillCircle(16, 10, 9)
+                .generateTexture('customer-top-4', 32, 40);
 
-            // 純喫茶の家具テクスチャを生成
-            // 丸テーブル（大理石風）
+            // 俯瞰視点用の家具
+            // テーブル（上から見た円形）
             this.add.graphics()
-                .fillStyle(0xF5F5DC)
-                .fillCircle(35, 35, 35)
-                .fillStyle(0xE6E6FA)
-                .fillCircle(35, 35, 30)
-                .fillStyle(0xD3D3D3)
+                .fillStyle(0x8B4513) // 木の縁
+                .fillCircle(40, 40, 35)
+                .fillStyle(0xF5DEB3) // テーブル表面
+                .fillCircle(40, 40, 30)
+                .fillStyle(0xE6E6FA) // ハイライト
                 .fillCircle(35, 35, 25)
-                .generateTexture('round-table', 70, 70);
+                .generateTexture('table-top', 80, 80);
 
-            // 椅子（レトロな赤い椅子）
+            // 椅子（上から見た四角）
             this.add.graphics()
-                .fillStyle(0x8B4513) // 木の脚
-                .fillRect(15, 35, 10, 15)
-                .fillRect(25, 35, 10, 15)
+                .fillStyle(0x8B4513) // 木の枠
+                .fillRect(5, 5, 30, 30)
                 .fillStyle(0xDC143C) // 赤いクッション
-                .fillEllipse(25, 25, 30, 20)
-                .fillStyle(0xB22222) // 背もたれ
-                .fillRect(10, 10, 30, 25)
-                .generateTexture('retro-chair', 50, 50);
+                .fillRect(8, 8, 24, 24)
+                .fillStyle(0xB22222) // 影
+                .fillRect(10, 26, 20, 6)
+                .generateTexture('chair-top', 40, 40);
 
-            // カウンター
+            // カウンター（長方形）
             this.add.graphics()
-                .fillStyle(0x8B4513) // 木目調
-                .fillRect(0, 0, 400, 60)
+                .fillStyle(0x8B4513)
+                .fillRect(0, 0, 300, 80)
                 .fillStyle(0xA0522D)
-                .fillRect(5, 5, 390, 50)
+                .fillRect(5, 5, 290, 70)
                 .fillStyle(0xCD853F)
-                .fillRect(10, 10, 380, 40)
-                .generateTexture('counter', 400, 60);
+                .fillRect(10, 10, 280, 60)
+                .generateTexture('counter-top', 300, 80);
 
-            // 観葉植物（純喫茶らしく）
+            // 観葉植物（上から見た円形）
             this.add.graphics()
                 .fillStyle(0x8B4513) // 鉢
-                .fillRect(10, 40, 20, 15)
+                .fillCircle(20, 20, 15)
                 .fillStyle(0x228B22) // 葉
-                .fillEllipse(20, 25, 25, 30)
+                .fillCircle(20, 20, 12)
                 .fillStyle(0x32CD32)
-                .fillEllipse(20, 20, 20, 25)
-                .generateTexture('plant-pot', 40, 55);
+                .fillCircle(20, 20, 8)
+                .generateTexture('plant-top', 40, 40);
 
-            // コーヒーカップ（テーブル装飾用）
+            // コーヒーカップ（小さな円）
             this.add.graphics()
-                .fillStyle(0xFFFFFF) // 白いカップ
-                .fillEllipse(8, 8, 12, 8)
-                .fillStyle(0x8B4513) // コーヒー
-                .fillEllipse(8, 8, 8, 6)
-                .fillStyle(0xD2B48C) // 受け皿
-                .fillEllipse(8, 12, 16, 4)
-                .generateTexture('coffee-cup', 16, 16);
+                .fillStyle(0xFFFFFF)
+                .fillCircle(6, 6, 5)
+                .fillStyle(0x8B4513)
+                .fillCircle(6, 6, 3)
+                .generateTexture('cup-top', 12, 12);
         }
 
         function create() {
-            // 純喫茶の温かい雰囲気を作成
-            this.createCafeBackground();
+            // 画面サイズに応じて喫茶店を作成
+            this.createCafeTopDown();
             
-            // ユニークなプレイヤーIDを生成
             playerId = 'player_' + Math.random().toString(36).substr(2, 9);
             
-            // ランダムなお客さんタイプを選択
-            const customerTypes = ['customer-1', 'customer-2', 'customer-3', 'customer-4'];
+            const customerTypes = ['customer-top-1', 'customer-top-2', 'customer-top-3', 'customer-top-4'];
             const playerType = customerTypes[Math.floor(Math.random() * customerTypes.length)];
             
-            // プレイヤー（お客さん）を作成
-            player = this.add.sprite(400, 300, playerType);
+            // プレイヤーを画面中央に配置
+            player = this.add.sprite(gameWidth / 2, gameHeight / 2, playerType);
             player.playerId = playerId;
             player.playerType = playerType;
-            player.setDepth(100); // アバターを前面に表示
+            player.setDepth(100);
             
-            // キーボード入力を設定
             cursors = this.input.keyboard.createCursorKeys();
             
-            // UI要素を追加（純喫茶らしく）
-            const headerBg = this.add.rectangle(400, 25, 800, 50, 0x8B4513, 0.8);
-            headerBg.setStrokeStyle(2, 0x654321);
-            
-            this.add.text(20, 10, '☕ 純喫茶「憩」', {
-                fontSize: '20px',
-                color: '#F5DEB3',
-                fontFamily: 'Georgia, serif',
-                fontWeight: 'bold'
-            });
-            
-            this.add.text(20, 35, 'ゆったりとお過ごしください', {
-                fontSize: '12px',
-                color: '#DEB887',
-                fontFamily: 'Georgia, serif',
-                fontStyle: 'italic'
-            });
-            
-            // お客さん数表示
-            this.add.text(650, 15, `お客様: ${Object.keys(otherPlayers).length + 1}名`, {
-                fontSize: '14px',
-                color: '#F5DEB3',
-                fontFamily: 'Georgia, serif'
-            });
-            
-            // Firebaseで他のプレイヤーの位置を監視
+            // Firebaseでプレイヤー監視
             const playersRef = ref(database, 'players');
             onValue(playersRef, (snapshot) => {
                 const players = snapshot.val();
+                const playerCount = players ? Object.keys(players).length : 1;
+                document.getElementById('customer-count').textContent = playerCount;
+                
                 if (players) {
                     Object.keys(players).forEach(id => {
                         if (id !== playerId) {
@@ -251,7 +232,6 @@
                         }
                     });
                     
-                    // 存在しないプレイヤーを削除
                     Object.keys(otherPlayers).forEach(id => {
                         if (!players[id]) {
                             if (otherPlayers[id]) {
@@ -267,112 +247,99 @@
             });
         }
 
-        // 純喫茶の背景を作成する関数
-        Phaser.Scene.prototype.createCafeBackground = function() {
-            // ベースの床（温かいフローリング）
-            this.add.rectangle(400, 300, 800, 600, 0xDEB887);
+        function resize(gameSize) {
+            const width = gameSize.width;
+            const height = gameSize.height;
             
-            // フローリングの木目模様
-            for (let i = 0; i < 600; i += 80) {
-                this.add.line(400, i + 40, 0, 0, 800, 0, 0xCD853F, 0.3).setOrigin(0.5, 0.5);
+            this.cameras.resize(width, height);
+        }
+
+        // 俯瞰視点の喫茶店を作成
+        Phaser.Scene.prototype.createCafeTopDown = function() {
+            const centerX = gameWidth / 2;
+            const centerY = gameHeight / 2;
+            
+            // ベースの床（木目調）
+            this.add.rectangle(centerX, centerY, gameWidth, gameHeight, 0xDEB887);
+            
+            // 床の木目パターン
+            for (let i = 0; i < gameWidth; i += 150) {
+                this.add.line(i + 75, centerY, 0, 0, 0, gameHeight, 0xCD853F, 0.2).setOrigin(0.5, 0.5);
             }
-            for (let i = 0; i < 800; i += 120) {
-                this.add.line(i + 60, 300, 0, 0, 0, 600, 0xCD853F, 0.2).setOrigin(0.5, 0.5);
+            for (let i = 0; i < gameHeight; i += 100) {
+                this.add.line(centerX, i + 50, 0, 0, gameWidth, 0, 0xCD853F, 0.15).setOrigin(0.5, 0.5);
             }
             
-            // カウンター（上部）
-            this.add.image(400, 90, 'counter').setDepth(1);
-            this.add.text(250, 70, 'マスター席', {
-                fontSize: '14px',
-                color: '#8B4513',
-                fontFamily: 'Georgia, serif'
-            });
+            // カウンター（上部中央）
+            this.add.image(centerX, 120, 'counter-top').setDepth(1);
             
-            // テーブルと椅子の配置（純喫茶らしく）
-            // 左側のテーブル群
-            this.add.image(150, 200, 'round-table').setDepth(1);
-            this.add.image(130, 170, 'retro-chair').setDepth(2);
-            this.add.image(170, 170, 'retro-chair').setDepth(2);
-            this.add.image(130, 230, 'retro-chair').setDepth(2);
-            this.add.image(170, 230, 'retro-chair').setDepth(2);
-            this.add.image(150, 200, 'coffee-cup').setDepth(3);
+            // テーブル配置（レスポンシブ）
+            const tableSpacing = 180;
+            const startX = Math.max(150, (gameWidth - tableSpacing * 4) / 2);
+            const startY = Math.max(250, centerY - 100);
             
-            this.add.image(150, 350, 'round-table').setDepth(1);
-            this.add.image(130, 320, 'retro-chair').setDepth(2);
-            this.add.image(170, 320, 'retro-chair').setDepth(2);
-            this.add.image(130, 380, 'retro-chair').setDepth(2);
-            this.add.image(170, 380, 'retro-chair').setDepth(2);
+            // 3x2のテーブル配置
+            for (let row = 0; row < 2; row++) {
+                for (let col = 0; col < 3; col++) {
+                    const x = startX + col * tableSpacing;
+                    const y = startY + row * tableSpacing;
+                    
+                    if (x < gameWidth - 100 && y < gameHeight - 100) {
+                        // テーブル
+                        this.add.image(x, y, 'table-top').setDepth(1);
+                        
+                        // 椅子を4方向に配置
+                        this.add.image(x - 50, y, 'chair-top').setDepth(2);
+                        this.add.image(x + 50, y, 'chair-top').setDepth(2);
+                        this.add.image(x, y - 50, 'chair-top').setDepth(2);
+                        this.add.image(x, y + 50, 'chair-top').setDepth(2);
+                        
+                        // コーヒーカップ
+                        if (Math.random() > 0.5) {
+                            this.add.image(x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30, 'cup-top').setDepth(3);
+                        }
+                    }
+                }
+            }
             
-            // 中央のテーブル群
-            this.add.image(400, 250, 'round-table').setDepth(1);
-            this.add.image(380, 220, 'retro-chair').setDepth(2);
-            this.add.image(420, 220, 'retro-chair').setDepth(2);
-            this.add.image(380, 280, 'retro-chair').setDepth(2);
-            this.add.image(420, 280, 'retro-chair').setDepth(2);
-            this.add.image(400, 250, 'coffee-cup').setDepth(3);
+            // 観葉植物を四隅に
+            if (gameWidth > 400 && gameHeight > 300) {
+                this.add.image(80, 80, 'plant-top').setDepth(1);
+                this.add.image(gameWidth - 80, 80, 'plant-top').setDepth(1);
+                this.add.image(80, gameHeight - 80, 'plant-top').setDepth(1);
+                this.add.image(gameWidth - 80, gameHeight - 80, 'plant-top').setDepth(1);
+            }
             
-            this.add.image(400, 400, 'round-table').setDepth(1);
-            this.add.image(380, 370, 'retro-chair').setDepth(2);
-            this.add.image(420, 370, 'retro-chair').setDepth(2);
-            this.add.image(380, 430, 'retro-chair').setDepth(2);
-            this.add.image(420, 430, 'retro-chair').setDepth(2);
-            
-            // 右側のテーブル群
-            this.add.image(650, 200, 'round-table').setDepth(1);
-            this.add.image(630, 170, 'retro-chair').setDepth(2);
-            this.add.image(670, 170, 'retro-chair').setDepth(2);
-            this.add.image(630, 230, 'retro-chair').setDepth(2);
-            this.add.image(670, 230, 'retro-chair').setDepth(2);
-            this.add.image(650, 200, 'coffee-cup').setDepth(3);
-            
-            this.add.image(650, 350, 'round-table').setDepth(1);
-            this.add.image(630, 320, 'retro-chair').setDepth(2);
-            this.add.image(670, 320, 'retro-chair').setDepth(2);
-            this.add.image(630, 380, 'retro-chair').setDepth(2);
-            this.add.image(670, 380, 'retro-chair').setDepth(2);
-            
-            // 観葉植物で雰囲気作り
-            this.add.image(50, 150, 'plant-pot').setDepth(1);
-            this.add.image(750, 150, 'plant-pot').setDepth(1);
-            this.add.image(50, 450, 'plant-pot').setDepth(1);
-            this.add.image(750, 450, 'plant-pot').setDepth(1);
-            
-            // 窓際のライン（雰囲気作り）
-            this.add.rectangle(400, 570, 700, 8, 0x8B4513, 0.3);
-            this.add.text(350, 545, '窓際の席', {
-                fontSize: '12px',
-                color: '#8B4513',
-                fontFamily: 'Georgia, serif',
-                fontStyle: 'italic'
-            });
+            // 壁の表現（薄い線）
+            this.add.rectangle(centerX, 10, gameWidth - 20, 5, 0x8B4513, 0.6);
+            this.add.rectangle(centerX, gameHeight - 10, gameWidth - 20, 5, 0x8B4513, 0.6);
+            this.add.rectangle(10, centerY, 5, gameHeight - 20, 0x8B4513, 0.6);
+            this.add.rectangle(gameWidth - 10, centerY, 5, gameHeight - 20, 0x8B4513, 0.6);
         };
 
         function updateOtherPlayer(id, data) {
             if (!otherPlayers[id]) {
-                // 新しいお客さんを作成
-                otherPlayers[id] = this.add.sprite(data.x, data.y, data.type || 'customer-1');
+                otherPlayers[id] = this.add.sprite(data.x, data.y, data.type || 'customer-top-1');
                 otherPlayers[id].setAlpha(0.9);
                 otherPlayers[id].setDepth(100);
                 
-                // 足元に薄い影を追加（存在感のため）
-                const shadowCircle = this.add.circle(data.x, data.y + 20, 12, 0x000000, 0.1);
+                // 足元の影
+                const shadowCircle = this.add.circle(data.x, data.y + 15, 10, 0x000000, 0.15);
                 shadowCircle.setDepth(50);
                 otherPlayers[id].shadowCircle = shadowCircle;
                 
             } else {
-                // 既存のお客さんの位置を更新
                 otherPlayers[id].x = data.x;
                 otherPlayers[id].y = data.y;
                 if (otherPlayers[id].shadowCircle) {
                     otherPlayers[id].shadowCircle.x = data.x;
-                    otherPlayers[id].shadowCircle.y = data.y + 20;
+                    otherPlayers[id].shadowCircle.y = data.y + 15;
                 }
             }
         }
 
         function update() {
-            // プレイヤーの移動処理
-            const speed = 2; // 純喫茶らしくゆっくりと
+            const speed = 2.5;
             let moved = false;
             
             if (cursors.left.isDown) {
@@ -392,11 +359,10 @@
                 moved = true;
             }
             
-            // 画面外に出ないように制限
-            player.x = Phaser.Math.Clamp(player.x, 24, 776);
-            player.y = Phaser.Math.Clamp(player.y, 80, 576);
+            // 画面境界の制限
+            player.x = Phaser.Math.Clamp(player.x, 30, gameWidth - 30);
+            player.y = Phaser.Math.Clamp(player.y, 30, gameHeight - 30);
             
-            // 動いた場合、Firebaseに位置を送信
             if (moved) {
                 const playerRef = ref(database, 'players/' + playerId);
                 set(playerRef, {
@@ -407,6 +373,11 @@
                 });
             }
         }
+
+        // ウィンドウリサイズ対応
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
 
         // ゲームを開始
         const game = new Phaser.Game(config);
