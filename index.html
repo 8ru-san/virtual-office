@@ -4,9 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>バーチャルオフィス</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            border: 2px solid #333;
+            margin: 0 auto;
+            display: block;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        p {
+            text-align: center;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <h1>バーチャルオフィス - テスト</h1>
-    <p>準備中...</p>
+    <h1>🏢 バーチャルオフィス</h1>
+    <p>矢印キーで移動できます</p>
+    
+    <!-- Phaser.jsをCDNから読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    
+    <script>
+        // ゲームの基本設定
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            backgroundColor: '#87CEEB', // 空色の背景
+            parent: 'game-container',
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        let player;
+        let cursors;
+
+        function preload() {
+            // シンプルな四角形のアバターを作成
+            this.add.graphics()
+                .fillStyle(0xff6b6b)
+                .fillRect(0, 0, 32, 48)
+                .generateTexture('player', 32, 48);
+        }
+
+        function create() {
+            // 背景に芝生っぽい感じを追加
+            this.add.rectangle(400, 550, 800, 100, 0x90EE90);
+            
+            // プレイヤー（アバター）を作成
+            player = this.add.sprite(400, 300, 'player');
+            
+            // キーボード入力を設定
+            cursors = this.input.keyboard.createCursorKeys();
+            
+            // 説明テキスト
+            this.add.text(10, 10, 'バーチャルオフィス広場', {
+                fontSize: '24px',
+                color: '#333'
+            });
+        }
+
+        function update() {
+            // プレイヤーの移動処理
+            const speed = 3;
+            
+            if (cursors.left.isDown) {
+                player.x -= speed;
+            }
+            if (cursors.right.isDown) {
+                player.x += speed;
+            }
+            if (cursors.up.isDown) {
+                player.y -= speed;
+            }
+            if (cursors.down.isDown) {
+                player.y += speed;
+            }
+            
+            // 画面外に出ないように制限
+            player.x = Phaser.Math.Clamp(player.x, 16, 784);
+            player.y = Phaser.Math.Clamp(player.y, 24, 576);
+        }
+
+        // ゲームを開始
+        const game = new Phaser.Game(config);
+    </script>
 </body>
 </html>
