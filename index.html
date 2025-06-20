@@ -34,11 +34,24 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     
     <script type="module">
-        // ゲームの基本設定
-       // Firebase Database の取得
+        // Firebase の設定と初期化
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
         
-        const database = getDatabase();
+        // Firebase設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4i0HfjD3Bxnv80TCm7icQ6e20jss1ATs",
+            authDomain: "virtual-office-40ff8.firebaseapp.com",
+            databaseURL: "https://virtual-office-40ff8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "virtual-office-40ff8",
+            storageBucket: "virtual-office-40ff8.firebasestorage.app",
+            messagingSenderId: "113452355413",
+            appId: "1:113452355413:web:1e35e9d49282710171e9dc"
+        };
+
+        // Firebaseを初期化
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
         
         // ゲームの基本設定
         const config = {
@@ -189,28 +202,5 @@
         // ゲームを開始
         const game = new Phaser.Game(config);
     </script>
-</body>
-</html>
-    </script>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyA4i0HfjD3Bxnv80TCm7icQ6e20jss1ATs",
-    authDomain: "virtual-office-40ff8.firebaseapp.com",
-    databaseURL: "https://virtual-office-40ff8-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "virtual-office-40ff8",
-    storageBucket: "virtual-office-40ff8.firebasestorage.app",
-    messagingSenderId: "113452355413",
-    appId: "1:113452355413:web:1e35e9d49282710171e9dc"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
 </body>
 </html>
