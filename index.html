@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>バーチャル純喫茶</title>
+    <title>ドット絵風バーチャルオフィス</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
         * {
             margin: 0;
@@ -13,9 +13,12 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Crimson Text', serif;
+            font-family: 'Press Start 2P', monospace;
             overflow: hidden;
-            background: linear-gradient(145deg, #2C1810 0%, #1A0F0A 100%);
+            background: #2a2a2a;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
         #game-container {
             width: 100vw;
@@ -26,94 +29,138 @@
         canvas {
             display: block;
             margin: 0 auto;
-            filter: contrast(1.1) saturate(1.2);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
         .ui-overlay {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: linear-gradient(145deg, rgba(62, 39, 35, 0.95), rgba(44, 24, 16, 0.9));
-            backdrop-filter: blur(10px);
-            color: #F4E4BC;
-            padding: 16px 20px;
-            border-radius: 12px;
-            font-size: 14px;
+            background: #1a1a1a;
+            border: 2px solid #4a4a4a;
+            color: #ffffff;
+            padding: 12px 16px;
+            font-size: 8px;
             z-index: 1000;
             pointer-events: none;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 1px solid rgba(244, 228, 188, 0.2);
+            box-shadow: 2px 2px 0px #000000;
         }
         .ui-overlay .title {
-            font-weight: 600;
-            font-size: 16px;
+            font-size: 10px;
             margin-bottom: 4px;
-            color: #E8D5B7;
+            color: #ffff99;
         }
         .ui-overlay .subtitle {
-            font-size: 12px;
-            color: #C4A975;
-            font-style: italic;
+            font-size: 6px;
+            color: #cccccc;
         }
         .controls-hint {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            background: linear-gradient(145deg, rgba(62, 39, 35, 0.95), rgba(44, 24, 16, 0.9));
-            backdrop-filter: blur(10px);
-            color: #C4A975;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 12px;
+            background: #1a1a1a;
+            border: 2px solid #4a4a4a;
+            color: #cccccc;
+            padding: 8px 12px;
+            font-size: 6px;
             z-index: 1000;
             pointer-events: none;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-            border: 1px solid rgba(244, 228, 188, 0.1);
-        }
-        .ambient-light {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 30% 20%, rgba(255, 231, 179, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 80%, rgba(255, 200, 124, 0.08) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 10;
+            box-shadow: 2px 2px 0px #000000;
         }
         .loading {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #E8D5B7;
-            font-size: 18px;
+            color: #ffffff;
+            font-size: 12px;
             z-index: 2000;
+        }
+        .character-select {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            border: 3px solid #4a4a4a;
+            padding: 20px;
+            z-index: 3000;
+            box-shadow: 3px 3px 0px #000000;
+        }
+        .character-select h2 {
+            color: #ffff99;
+            font-size: 10px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .character-option {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #4a4a4a;
+            background: #2a2a2a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .character-option:hover {
+            border-color: #ffff99;
+            background: #3a3a3a;
+        }
+        .character-option.selected {
+            border-color: #ff6666;
+            background: #4a2a2a;
+        }
+        .start-button {
+            width: 100%;
+            padding: 12px;
+            background: #2a4a2a;
+            border: 2px solid #4a6a4a;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 8px;
+            cursor: pointer;
+        }
+        .start-button:hover {
+            background: #3a5a3a;
+            border-color: #5a7a5a;
         }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">☕ 準備中...</div>
+    <div class="loading" id="loading">Loading...</div>
     
-    <div class="ambient-light"></div>
-    
-    <div class="ui-overlay">
-        <div class="title">☕ Café Yasuragi</div>
-        <div class="subtitle">お客様: <span id="customer-count">1</span>名様</div>
+    <div class="character-select" id="character-select">
+        <h2>Choose Your Avatar</h2>
+        <div class="character-grid" id="character-grid">
+            <!-- キャラクター選択肢をここに動的生成 -->
+        </div>
+        <button class="start-button" onclick="startGame()">Enter Office</button>
     </div>
     
-    <div class="controls-hint">
-        ← → ↑ ↓ 移動
+    <div class="ui-overlay" id="ui-overlay" style="display: none;">
+        <div class="title">Virtual Office</div>
+        <div class="subtitle">Users: <span id="user-count">1</span></div>
     </div>
     
-    <!-- Phaser.jsをCDNから読み込み -->
+    <div class="controls-hint" id="controls-hint" style="display: none;">
+        Arrow Keys: Move
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     
     <script type="module">
-        // Firebase の設定と初期化
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, onDisconnect } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
         
-        // Firebase設定
         const firebaseConfig = {
             apiKey: "AIzaSyA4i0HfjD3Bxnv80TCm7icQ6e20jss1ATs",
             authDomain: "virtual-office-40ff8.firebaseapp.com",
@@ -124,368 +171,536 @@
             appId: "1:113452355413:web:1e35e9d49282710171e9dc"
         };
 
-        // Firebaseを初期化
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        // レスポンシブなゲーム設定
-        const gameWidth = window.innerWidth;
-        const gameHeight = window.innerHeight;
+        let selectedCharacter = 'office-worker-1';
+        let gameInstance = null;
+        let playerId = null;
+        let deviceId = null;
         
-        const config = {
-            type: Phaser.AUTO,
-            width: gameWidth,
-            height: gameHeight,
-            backgroundColor: '#1A0F0A',
-            parent: 'game-container',
-            scale: {
-                mode: Phaser.Scale.RESIZE,
-                autoCenter: Phaser.Scale.CENTER_BOTH
-            },
-            scene: {
-                preload: preload,
-                create: create,
-                update: update,
-                resize: resize
+        // デバイスIDを生成（重複カウント防止）
+        function generateDeviceId() {
+            let id = localStorage.getItem('device-id');
+            if (!id) {
+                id = 'device_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+                localStorage.setItem('device-id', id);
             }
-        };
-
-        let player;
-        let cursors;
-        let otherPlayers = {};
-        let playerId;
-        let gameScene;
-
-        function preload() {
-            gameScene = this;
-            
-            // モダンでおしゃれなアバター（グラデーション使用）
-            // エレガントなお客さん1
-            this.add.graphics()
-                .fillGradientStyle(0xFFE4B5, 0xFFD1A9, 0xFFE4B5, 0xFFD1A9) // 肌のグラデーション
-                .fillCircle(16, 12, 9)
-                .fillGradientStyle(0x2C3E50, 0x34495E, 0x2C3E50, 0x34495E) // エレガントなネイビー
-                .fillEllipse(16, 28, 18, 22)
-                .fillGradientStyle(0x8B4513, 0x6F3709, 0x8B4513, 0x6F3709) // 髪のグラデーション
-                .fillCircle(16, 10, 10)
-                .generateTexture('customer-modern-1', 32, 40);
-                
-            // シックなお客さん2
-            this.add.graphics()
-                .fillGradientStyle(0xFFE4B5, 0xFFD1A9, 0xFFE4B5, 0xFFD1A9)
-                .fillCircle(16, 12, 9)
-                .fillGradientStyle(0x8E44AD, 0x9B59B6, 0x8E44AD, 0x9B59B6) // 上品な紫
-                .fillEllipse(16, 28, 18, 22)
-                .fillGradientStyle(0x4A4A4A, 0x2E2E2E, 0x4A4A4A, 0x2E2E2E) // ダークヘア
-                .fillCircle(16, 10, 10)
-                .generateTexture('customer-modern-2', 32, 40);
-                
-            // モダンなお客さん3
-            this.add.graphics()
-                .fillGradientStyle(0xFFE4B5, 0xFFD1A9, 0xFFE4B5, 0xFFD1A9)
-                .fillCircle(16, 12, 9)
-                .fillGradientStyle(0xE67E22, 0xF39C12, 0xE67E22, 0xF39C12) // 温かいオレンジ
-                .fillEllipse(16, 28, 18, 22)
-                .fillGradientStyle(0xD35400, 0xE67E22, 0xD35400, 0xE67E22) // 明るい茶髪
-                .fillCircle(16, 10, 10)
-                .generateTexture('customer-modern-3', 32, 40);
-                
-            // エレガントなお客さん4
-            this.add.graphics()
-                .fillGradientStyle(0xFFE4B5, 0xFFD1A9, 0xFFE4B5, 0xFFD1A9)
-                .fillCircle(16, 12, 9)
-                .fillGradientStyle(0x27AE60, 0x2ECC71, 0x27AE60, 0x2ECC71) // 深い緑
-                .fillEllipse(16, 28, 18, 22)
-                .fillGradientStyle(0x8B4513, 0x6F3709, 0x8B4513, 0x6F3709)
-                .fillCircle(16, 10, 10)
-                .generateTexture('customer-modern-4', 32, 40);
-
-            // 高級感のある家具
-            // 大理石風テーブル
-            this.add.graphics()
-                .fillGradientStyle(0x3E2723, 0x2E1A17, 0x3E2723, 0x2E1A17) // ダークウッドの縁
-                .fillCircle(45, 45, 40)
-                .fillGradientStyle(0xF5F5DC, 0xE6E6FA, 0xF8F8FF, 0xE0E0E0) // 大理石風
-                .fillCircle(45, 45, 35)
-                .fillStyle(0xFFFFFF, 0.3) // ハイライト
-                .fillEllipse(35, 30, 25, 15)
-                .generateTexture('marble-table', 90, 90);
-
-            // レザーチェア
-            this.add.graphics()
-                .fillGradientStyle(0x2C1810, 0x1A0F0A, 0x2C1810, 0x1A0F0A) // ダークウッド脚
-                .fillRect(8, 32, 24, 8)
-                .fillGradientStyle(0x8B0000, 0xDC143C, 0x8B0000, 0xB22222) // 深紅のレザー
-                .fillRoundedRect(5, 5, 30, 30, 5)
-                .fillStyle(0xFFFFFF, 0.1) // レザーのハイライト
-                .fillEllipse(20, 15, 15, 8)
-                .generateTexture('leather-chair', 40, 40);
-
-            // モダンカウンター
-            this.add.graphics()
-                .fillGradientStyle(0x2C1810, 0x1A0F0A, 0x2C1810, 0x1A0F0A) // ベース
-                .fillRect(0, 0, 350, 90)
-                .fillGradientStyle(0x3E2723, 0x4E342B, 0x3E2723, 0x4E342B) // トップ
-                .fillRect(5, 5, 340, 80)
-                .fillStyle(0xFFD700, 0.2) // ゴールドアクセント
-                .fillRect(5, 5, 340, 3)
-                .generateTexture('modern-counter', 350, 90);
-
-            // アートな観葉植物
-            this.add.graphics()
-                .fillGradientStyle(0x2C1810, 0x1A0F0A, 0x2C1810, 0x1A0F0A) // モダンポット
-                .fillRect(5, 25, 30, 15)
-                .fillGradientStyle(0x228B22, 0x32CD32, 0x228B22, 0x32CD32) // 鮮やかな葉
-                .fillCircle(20, 20, 15)
-                .fillGradientStyle(0x90EE90, 0x98FB98, 0x90EE90, 0x98FB98) // ハイライト
-                .fillCircle(18, 15, 10)
-                .generateTexture('modern-plant', 40, 40);
-
-            // エスプレッソカップ
-            this.add.graphics()
-                .fillStyle(0x2C1810) // ダークソーサー
-                .fillCircle(8, 10, 7)
-                .fillGradientStyle(0xFFFFFF, 0xF5F5F5, 0xFFFFFF, 0xF5F5F5) // 白いカップ
-                .fillCircle(8, 8, 5)
-                .fillGradientStyle(0x3E2723, 0x1A0F0A, 0x3E2723, 0x1A0F0A) // 濃いエスプレッソ
-                .fillCircle(8, 8, 3)
-                .generateTexture('espresso-cup', 16, 16);
-
-            // 照明効果用テクスチャ
-            this.add.graphics()
-                .fillGradientStyle(0xFFE4B5, 0xFFD700, 0xFFA500, 0xFF8C00, 0.3) // 温かい光
-                .fillCircle(50, 50, 50)
-                .generateTexture('warm-light', 100, 100);
+            return id;
         }
-
-        function create() {
-            // ローディング非表示
-            document.getElementById('loading').style.display = 'none';
-            
-            // おしゃれな喫茶店を作成
-            this.createModernCafe();
-            
-            playerId = 'player_' + Math.random().toString(36).substr(2, 9);
-            
-            const customerTypes = ['customer-modern-1', 'customer-modern-2', 'customer-modern-3', 'customer-modern-4'];
-            const playerType = customerTypes[Math.floor(Math.random() * customerTypes.length)];
-            
-            // プレイヤーを画面中央に配置
-            player = this.add.sprite(gameWidth / 2, gameHeight / 2, playerType);
-            player.playerId = playerId;
-            player.playerType = playerType;
-            player.setDepth(100);
-            
-            // プレイヤーにソフトグロー効果
-            const playerGlow = this.add.circle(player.x, player.y, 25, 0xFFE4B5, 0.1);
-            playerGlow.setDepth(90);
-            player.glowEffect = playerGlow;
-            
-            cursors = this.input.keyboard.createCursorKeys();
-            
-            // Firebase監視
-            const playersRef = ref(database, 'players');
-            onValue(playersRef, (snapshot) => {
-                const players = snapshot.val();
-                const playerCount = players ? Object.keys(players).length : 1;
-                document.getElementById('customer-count').textContent = playerCount;
-                
-                if (players) {
-                    Object.keys(players).forEach(id => {
-                        if (id !== playerId) {
-                            updateOtherPlayer.call(this, id, players[id]);
-                        }
-                    });
-                    
-                    Object.keys(otherPlayers).forEach(id => {
-                        if (!players[id]) {
-                            if (otherPlayers[id]) {
-                                otherPlayers[id].destroy();
-                                if (otherPlayers[id].shadowCircle) {
-                                    otherPlayers[id].shadowCircle.destroy();
-                                }
-                                if (otherPlayers[id].glowEffect) {
-                                    otherPlayers[id].glowEffect.destroy();
-                                }
-                                delete otherPlayers[id];
-                            }
-                        }
-                    });
-                }
-            });
-        }
-
-        function resize(gameSize) {
-            const width = gameSize.width;
-            const height = gameSize.height;
-            this.cameras.resize(width, height);
-        }
-
-        // モダンでおしゃれな喫茶店を作成
-        Phaser.Scene.prototype.createModernCafe = function() {
-            const centerX = gameWidth / 2;
-            const centerY = gameHeight / 2;
-            
-            // エレガントなベース床
-            const floorGradient = this.add.graphics();
-            floorGradient.fillGradientStyle(0x2C1810, 0x1A0F0A, 0x3E2723, 0x2C1810);
-            floorGradient.fillRect(0, 0, gameWidth, gameHeight);
-            floorGradient.setDepth(-10);
-            
-            // 高級感のある床パターン
-            for (let i = 0; i < gameWidth; i += 200) {
-                for (let j = 0; j < gameHeight; j += 200) {
-                    this.add.rectangle(i + 100, j + 100, 180, 180, 0x3E2723, 0.2).setDepth(-5);
-                    this.add.rectangle(i + 100, j + 100, 160, 160, 0x4E342B, 0.1).setDepth(-4);
-                }
-            }
-            
-            // アンビエント照明
-            const ambientLights = [
-                { x: centerX * 0.3, y: centerY * 0.3 },
-                { x: centerX * 1.7, y: centerY * 0.3 },
-                { x: centerX * 0.3, y: centerY * 1.7 },
-                { x: centerX * 1.7, y: centerY * 1.7 }
+        
+        // キャラクター選択肢を生成
+        function generateCharacterOptions() {
+            const characters = [
+                { id: 'office-worker-1', name: 'Business Person', colors: ['#333333', '#ffffff', '#d4af37'] },
+                { id: 'office-worker-2', name: 'Designer', colors: ['#4a4a4a', '#ff6b6b', '#333333'] },
+                { id: 'office-worker-3', name: 'Developer', colors: ['#2c3e50', '#3498db', '#333333'] },
+                { id: 'office-worker-4', name: 'Manager', colors: ['#8b4513', '#ffffff', '#d4af37'] },
+                { id: 'office-worker-5', name: 'Consultant', colors: ['#2c1810', '#e74c3c', '#333333'] },
+                { id: 'office-worker-6', name: 'Analyst', colors: ['#27ae60', '#ffffff', '#333333'] }
             ];
             
-            ambientLights.forEach(light => {
-                if (light.x < gameWidth && light.y < gameHeight) {
-                    this.add.image(light.x, light.y, 'warm-light').setDepth(-2).setAlpha(0.4);
+            const grid = document.getElementById('character-grid');
+            characters.forEach((char, index) => {
+                const option = document.createElement('div');
+                option.className = 'character-option';
+                option.onclick = () => selectCharacter(char.id, option);
+                
+                // 簡単なプレビュー（実際のピクセルアートは後でPhaserで生成）
+                const preview = document.createElement('div');
+                preview.style.width = '24px';
+                preview.style.height = '32px';
+                preview.style.background = char.colors[0];
+                preview.style.border = `1px solid ${char.colors[1]}`;
+                preview.style.margin = 'auto';
+                
+                option.appendChild(preview);
+                grid.appendChild(option);
+                
+                if (index === 0) {
+                    option.classList.add('selected');
                 }
             });
+        }
+        
+        function selectCharacter(charId, element) {
+            selectedCharacter = charId;
+            document.querySelectorAll('.character-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+        
+        function startGame() {
+            deviceId = generateDeviceId();
+            playerId = 'player_' + Math.random().toString(36).substr(2, 9);
             
-            // モダンカウンター
-            this.add.image(centerX, 100, 'modern-counter').setDepth(1);
+            document.getElementById('character-select').style.display = 'none';
+            document.getElementById('ui-overlay').style.display = 'block';
+            document.getElementById('controls-hint').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
             
-            // エレガントなテーブル配置
-            const tableSpacing = 200;
-            const startX = Math.max(150, (gameWidth - tableSpacing * 3) / 2);
-            const startY = Math.max(280, centerY - 50);
+            initializeGame();
+        }
+        
+        window.startGame = startGame;
+        
+        function initializeGame() {
+            const gameWidth = window.innerWidth;
+            const gameHeight = window.innerHeight;
             
-            // 2x3のテーブル配置（ゆとりのある配置）
-            for (let row = 0; row < 2; row++) {
-                for (let col = 0; col < 3; col++) {
-                    const x = startX + col * tableSpacing;
-                    const y = startY + row * tableSpacing;
-                    
-                    if (x < gameWidth - 100 && y < gameHeight - 100) {
-                        // 大理石テーブル
-                        this.add.image(x, y, 'marble-table').setDepth(1);
-                        
-                        // レザーチェアを4方向に
-                        this.add.image(x - 60, y, 'leather-chair').setDepth(2);
-                        this.add.image(x + 60, y, 'leather-chair').setDepth(2);
-                        this.add.image(x, y - 60, 'leather-chair').setDepth(2);
-                        this.add.image(x, y + 60, 'leather-chair').setDepth(2);
-                        
-                        // エスプレッソカップ（ランダム配置）
-                        if (Math.random() > 0.4) {
-                            const cupX = x + (Math.random() - 0.5) * 40;
-                            const cupY = y + (Math.random() - 0.5) * 40;
-                            this.add.image(cupX, cupY, 'espresso-cup').setDepth(3);
-                        }
-                        
-                        // テーブル周りのソフトライト
-                        this.add.circle(x, y, 50, 0xFFE4B5, 0.05).setDepth(0);
+            const config = {
+                type: Phaser.AUTO,
+                width: gameWidth,
+                height: gameHeight,
+                backgroundColor: '#2a2a2a',
+                parent: 'game-container',
+                scale: {
+                    mode: Phaser.Scale.RESIZE,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                },
+                render: {
+                    pixelArt: true,
+                    antialias: false,
+                    roundPixels: true
+                },
+                scene: {
+                    preload: preload,
+                    create: create,
+                    update: update,
+                    resize: resize
+                }
+            };
+
+            let player;
+            let cursors;
+            let otherPlayers = {};
+            let gameScene;
+
+            function preload() {
+                gameScene = this;
+                
+                // ピクセルアート風のオフィスワーカーを生成
+                createPixelCharacters.call(this);
+                createPixelFurniture.call(this);
+            }
+            
+            function createPixelCharacters() {
+                // オフィスワーカー1（ビジネスパーソン）
+                this.add.graphics()
+                    .fillStyle(0xffdbac) // 肌色
+                    .fillRect(6, 2, 4, 4) // 頭
+                    .fillStyle(0x8b4513) // 髪
+                    .fillRect(5, 1, 6, 3)
+                    .fillStyle(0x333333) // スーツ
+                    .fillRect(4, 6, 8, 12)
+                    .fillStyle(0xffffff) // シャツ
+                    .fillRect(6, 6, 4, 6)
+                    .fillStyle(0xd4af37) // ネクタイ
+                    .fillRect(7, 6, 2, 4)
+                    .fillStyle(0xffdbac) // 腕
+                    .fillRect(2, 8, 3, 6)
+                    .fillRect(11, 8, 3, 6)
+                    .fillStyle(0x333333) // パンツ
+                    .fillRect(5, 18, 6, 8)
+                    .fillStyle(0x222222) // 靴
+                    .fillRect(4, 26, 3, 4)
+                    .fillRect(9, 26, 3, 4)
+                    .generateTexture('office-worker-1', 16, 32);
+
+                // オフィスワーカー2（デザイナー）
+                this.add.graphics()
+                    .fillStyle(0xffdbac)
+                    .fillRect(6, 2, 4, 4)
+                    .fillStyle(0x4a4a4a) // グレーヘア
+                    .fillRect(5, 1, 6, 3)
+                    .fillStyle(0xff6b6b) // 赤いトップ
+                    .fillRect(4, 6, 8, 12)
+                    .fillStyle(0xffdbac)
+                    .fillRect(2, 8, 3, 6)
+                    .fillRect(11, 8, 3, 6)
+                    .fillStyle(0x333333)
+                    .fillRect(5, 18, 6, 8)
+                    .fillStyle(0x222222)
+                    .fillRect(4, 26, 3, 4)
+                    .fillRect(9, 26, 3, 4)
+                    .generateTexture('office-worker-2', 16, 32);
+
+                // オフィスワーカー3（開発者）
+                this.add.graphics()
+                    .fillStyle(0xffdbac)
+                    .fillRect(6, 2, 4, 4)
+                    .fillStyle(0x333333) // 黒髪
+                    .fillRect(5, 1, 6, 3)
+                    .fillStyle(0x3498db) // 青いシャツ
+                    .fillRect(4, 6, 8, 12)
+                    .fillStyle(0xffdbac)
+                    .fillRect(2, 8, 3, 6)
+                    .fillRect(11, 8, 3, 6)
+                    .fillStyle(0x2c3e50) // 濃い青パンツ
+                    .fillRect(5, 18, 6, 8)
+                    .fillStyle(0x222222)
+                    .fillRect(4, 26, 3, 4)
+                    .fillRect(9, 26, 3, 4)
+                    .generateTexture('office-worker-3', 16, 32);
+
+                // 他のキャラクターも同様に作成
+                this.add.graphics()
+                    .fillStyle(0xffdbac)
+                    .fillRect(6, 2, 4, 4)
+                    .fillStyle(0x8b4513)
+                    .fillRect(5, 1, 6, 3)
+                    .fillStyle(0x8b4513) // 茶色スーツ
+                    .fillRect(4, 6, 8, 12)
+                    .fillStyle(0xffffff)
+                    .fillRect(6, 6, 4, 6)
+                    .fillStyle(0xd4af37)
+                    .fillRect(7, 6, 2, 4)
+                    .fillStyle(0xffdbac)
+                    .fillRect(2, 8, 3, 6)
+                    .fillRect(11, 8, 3, 6)
+                    .fillStyle(0x654321)
+                    .fillRect(5, 18, 6, 8)
+                    .fillStyle(0x222222)
+                    .fillRect(4, 26, 3, 4)
+                    .fillRect(9, 26, 3, 4)
+                    .generateTexture('office-worker-4', 16, 32);
+
+                this.add.graphics()
+                    .fillStyle(0xffdbac)
+                    .fillRect(6, 2, 4, 4)
+                    .fillStyle(0x2c1810)
+                    .fillRect(5, 1, 6, 3)
+                    .fillStyle(0xe74c3c) // 赤いブレザー
+                    .fillRect(4, 6, 8, 12)
+                    .fillStyle(0xffffff)
+                    .fillRect(6, 6, 4, 6)
+                    .fillStyle(0xffdbac)
+                    .fillRect(2, 8, 3, 6)
+                    .fillRect(11, 8, 3, 6)
+                    .fillStyle(0x333333)
+                    .fillRect(5, 18, 6, 8)
+                    .fillStyle(0x222222)
+                    .fillRect(4, 26, 3, 4)
+                    .fillRect(9, 26, 3, 4)
+                    .generateTexture('office-worker-5', 16, 32);
+
+                this.add.graphics()
+                    .fillStyle(0xffdbac)
+                    .fillRect(6, 2, 4, 4)
+                    .fillStyle(0x333333)
+                    .fillRect(5, 1, 6, 3)
+                    .fillStyle(0x27ae60) // 緑のシャツ
+                    .fillRect(4, 6, 8, 12)
+                    .fillStyle(0xffffff)
+                    .fillRect(6, 6, 4, 6)
+                    .fillStyle(0xffdbac)
+                    .fillRect(2, 8, 3, 6)
+                    .fillRect(11, 8, 3, 6)
+                    .fillStyle(0x333333)
+                    .fillRect(5, 18, 6, 8)
+                    .fillStyle(0x222222)
+                    .fillRect(4, 26, 3, 4)
+                    .fillRect(9, 26, 3, 4)
+                    .generateTexture('office-worker-6', 16, 32);
+            }
+            
+            function createPixelFurniture() {
+                // ピクセルアート風デスク
+                this.add.graphics()
+                    .fillStyle(0x8b4513) // 木材色
+                    .fillRect(0, 20, 64, 8) // デスクトップ
+                    .fillStyle(0x654321) // 影
+                    .fillRect(0, 28, 64, 4)
+                    .fillStyle(0x8b4513) // 脚
+                    .fillRect(4, 28, 8, 16)
+                    .fillRect(52, 28, 8, 16)
+                    .fillStyle(0x2c3e50) // モニター
+                    .fillRect(20, 8, 24, 16)
+                    .fillStyle(0x34495e) // モニター枠
+                    .fillRect(18, 6, 28, 20)
+                    .fillStyle(0x3498db) // 画面
+                    .fillRect(22, 10, 20, 12)
+                    .generateTexture('office-desk', 64, 44);
+
+                // ピクセルアート風チェア
+                this.add.graphics()
+                    .fillStyle(0x333333) // チェア本体
+                    .fillRect(8, 8, 16, 16)
+                    .fillStyle(0x444444) // 背もたれ
+                    .fillRect(6, 4, 20, 12)
+                    .fillStyle(0x222222) // 脚
+                    .fillRect(10, 24, 4, 12)
+                    .fillRect(18, 24, 4, 12)
+                    .fillStyle(0x1a1a1a) // キャスター
+                    .fillRect(8, 36, 8, 4)
+                    .fillRect(16, 36, 8, 4)
+                    .generateTexture('office-chair', 32, 40);
+
+                // 会議テーブル
+                this.add.graphics()
+                    .fillStyle(0x8b4513)
+                    .fillRect(0, 16, 96, 12)
+                    .fillStyle(0x654321)
+                    .fillRect(0, 28, 96, 4)
+                    .fillStyle(0x8b4513)
+                    .fillRect(8, 28, 12, 20)
+                    .fillRect(76, 28, 12, 20)
+                    .generateTexture('meeting-table', 96, 48);
+
+                // 本棚
+                this.add.graphics()
+                    .fillStyle(0x8b4513) // 本棚フレーム
+                    .fillRect(0, 0, 32, 64)
+                    .fillStyle(0x654321) // 棚板
+                    .fillRect(2, 10, 28, 2)
+                    .fillRect(2, 22, 28, 2)
+                    .fillRect(2, 34, 28, 2)
+                    .fillRect(2, 46, 28, 2)
+                    .fillStyle(0xe74c3c) // 本（赤）
+                    .fillRect(4, 12, 4, 8)
+                    .fillRect(12, 12, 6, 8)
+                    .fillStyle(0x3498db) // 本（青）
+                    .fillRect(8, 12, 4, 8)
+                    .fillRect(18, 12, 8, 8)
+                    .fillStyle(0x27ae60) // 本（緑）
+                    .fillRect(4, 24, 6, 8)
+                    .fillRect(14, 24, 4, 8)
+                    .fillRect(20, 24, 6, 8)
+                    .generateTexture('bookshelf', 32, 64);
+
+                // コーヒーマシン
+                this.add.graphics()
+                    .fillStyle(0x2c3e50) // 本体
+                    .fillRect(4, 8, 24, 24)
+                    .fillStyle(0x34495e) // 詳細
+                    .fillRect(6, 10, 20, 4)
+                    .fillRect(8, 16, 16, 8)
+                    .fillStyle(0xe74c3c) // ボタン
+                    .fillRect(12, 18, 4, 4)
+                    .fillRect(16, 18, 4, 4)
+                    .fillStyle(0x8b4513) // カップ
+                    .fillRect(12, 28, 8, 6)
+                    .generateTexture('coffee-machine', 32, 36);
+
+                // 観葉植物
+                this.add.graphics()
+                    .fillStyle(0x8b4513) // 鉢
+                    .fillRect(6, 20, 20, 12)
+                    .fillStyle(0x654321) // 鉢の影
+                    .fillRect(6, 28, 20, 4)
+                    .fillStyle(0x27ae60) // 葉
+                    .fillCircle(16, 16, 12)
+                    .fillStyle(0x2ecc71) // ハイライト
+                    .fillCircle(12, 12, 6)
+                    .fillCircle(20, 14, 4)
+                    .generateTexture('office-plant', 32, 32);
+            }
+
+            function create() {
+                // ピクセルアート風オフィス環境を作成
+                this.createPixelOffice();
+                
+                // プレイヤー作成
+                const startX = gameWidth / 2;
+                const startY = gameHeight / 2;
+                
+                player = this.add.sprite(startX, startY, selectedCharacter);
+                player.setScale(2); // ピクセルアートを少し大きく
+                player.playerId = playerId;
+                player.setDepth(100);
+                
+                cursors = this.input.keyboard.createCursorKeys();
+                
+                // Firebase接続処理（重複カウント防止）
+                setupFirebaseConnection();
+            }
+
+            Phaser.Scene.prototype.createPixelOffice = function() {
+                const tileSize = 32;
+                const scaledTileSize = tileSize * 2;
+                
+                // 床のタイル（チェッカーボード）
+                for (let x = 0; x < gameWidth; x += scaledTileSize) {
+                    for (let y = 0; y < gameHeight; y += scaledTileSize) {
+                        const isEven = ((x / scaledTileSize) + (y / scaledTileSize)) % 2 === 0;
+                        const color = isEven ? 0x4a4a4a : 0x3a3a3a;
+                        this.add.rectangle(x + scaledTileSize/2, y + scaledTileSize/2, scaledTileSize, scaledTileSize, color).setDepth(-10);
                     }
                 }
-            }
-            
-            // アートな観葉植物
-            if (gameWidth > 400 && gameHeight > 300) {
-                this.add.image(100, 100, 'modern-plant').setDepth(1);
-                this.add.image(gameWidth - 100, 100, 'modern-plant').setDepth(1);
-                this.add.image(100, gameHeight - 100, 'modern-plant').setDepth(1);
-                this.add.image(gameWidth - 100, gameHeight - 100, 'modern-plant').setDepth(1);
-            }
-            
-            // エレガントな壁の境界線
-            const borderColor = 0xFFD700;
-            this.add.rectangle(centerX, 5, gameWidth - 10, 3, borderColor, 0.6).setDepth(5);
-            this.add.rectangle(centerX, gameHeight - 5, gameWidth - 10, 3, borderColor, 0.6).setDepth(5);
-            this.add.rectangle(5, centerY, 3, gameHeight - 10, borderColor, 0.6).setDepth(5);
-            this.add.rectangle(gameWidth - 5, centerY, 3, gameHeight - 10, borderColor, 0.6).setDepth(5);
-        };
-
-        function updateOtherPlayer(id, data) {
-            if (!otherPlayers[id]) {
-                otherPlayers[id] = this.add.sprite(data.x, data.y, data.type || 'customer-modern-1');
-                otherPlayers[id].setAlpha(0.95);
-                otherPlayers[id].setDepth(100);
                 
-                // エレガントな影
-                const shadowCircle = this.add.circle(data.x, data.y + 15, 12, 0x000000, 0.2);
-                shadowCircle.setDepth(50);
-                otherPlayers[id].shadowCircle = shadowCircle;
-                
-                // ソフトグロー効果
-                const glowEffect = this.add.circle(data.x, data.y, 25, 0xFFE4B5, 0.08);
-                glowEffect.setDepth(90);
-                otherPlayers[id].glowEffect = glowEffect;
-                
-            } else {
-                otherPlayers[id].x = data.x;
-                otherPlayers[id].y = data.y;
-                if (otherPlayers[id].shadowCircle) {
-                    otherPlayers[id].shadowCircle.x = data.x;
-                    otherPlayers[id].shadowCircle.y = data.y + 15;
+                // オフィス家具の配置
+                // デスク群
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        const x = 150 + i * 200;
+                        const y = 150 + j * 150;
+                        if (x < gameWidth - 100 && y < gameHeight - 100) {
+                            this.add.image(x, y, 'office-desk').setScale(2).setDepth(1);
+                            this.add.image(x, y + 60, 'office-chair').setScale(2).setDepth(1);
+                        }
+                    }
                 }
-                if (otherPlayers[id].glowEffect) {
-                    otherPlayers[id].glowEffect.x = data.x;
-                    otherPlayers[id].glowEffect.y = data.y;
+                
+                // 会議室エリア
+                if (gameWidth > 500 && gameHeight > 400) {
+                    const meetingX = gameWidth - 200;
+                    const meetingY = 200;
+                    this.add.image(meetingX, meetingY, 'meeting-table').setScale(2).setDepth(1);
+                    
+                    // 会議テーブル周りのチェア
+                    this.add.image(meetingX - 60, meetingY, 'office-chair').setScale(2).setDepth(1);
+                    this.add.image(meetingX + 60, meetingY, 'office-chair').setScale(2).setDepth(1);
+                    this.add.image(meetingX, meetingY - 40, 'office-chair').setScale(2).setDepth(1);
+                    this.add.image(meetingX, meetingY + 40, 'office-chair').setScale(2).setDepth(1);
                 }
-            }
-        }
+                
+                // コーヒーエリア
+                this.add.image(100, 100, 'coffee-machine').setScale(2).setDepth(1);
+                
+                // 本棚
+                if (gameHeight > 300) {
+                    this.add.image(50, gameHeight - 150, 'bookshelf').setScale(2).setDepth(1);
+                    this.add.image(gameWidth - 50, gameHeight - 150, 'bookshelf').setScale(2).setDepth(1);
+                }
+                
+                // 観葉植物
+                this.add.image(120, gameHeight - 80, 'office-plant').setScale(2).setDepth(1);
+                this.add.image(gameWidth - 120, 80, 'office-plant').setScale(2).setDepth(1);
+                
+                // 壁の境界
+                this.add.rectangle(gameWidth/2, 10, gameWidth, 20, 0x2c3e50).setDepth(5);
+                this.add.rectangle(gameWidth/2, gameHeight - 10, gameWidth, 20, 0x2c3e50).setDepth(5);
+                this.add.rectangle(10, gameHeight/2, 20, gameHeight, 0x2c3e50).setDepth(5);
+                this.add.rectangle(gameWidth - 10, gameHeight/2, 20, gameHeight, 0x2c3e50).setDepth(5);
+            };
 
-        function update() {
-            const speed = 2.5;
-            let moved = false;
-            
-            if (cursors.left.isDown) {
-                player.x -= speed;
-                moved = true;
-            }
-            if (cursors.right.isDown) {
-                player.x += speed;
-                moved = true;
-            }
-            if (cursors.up.isDown) {
-                player.y -= speed;
-                moved = true;
-            }
-            if (cursors.down.isDown) {
-                player.y += speed;
-                moved = true;
-            }
-            
-            // プレイヤーのグロー効果を追従
-            if (player.glowEffect) {
-                player.glowEffect.x = player.x;
-                player.glowEffect.y = player.y;
-            }
-            
-            // 画面境界の制限
-            player.x = Phaser.Math.Clamp(player.x, 30, gameWidth - 30);
-            player.y = Phaser.Math.Clamp(player.y, 30, gameHeight - 30);
-            
-            if (moved) {
-                const playerRef = ref(database, 'players/' + playerId);
+            function setupFirebaseConnection() {
+                const userRef = ref(database, `users/${deviceId}`);
+                const playersRef = ref(database, 'players');
+                
+                // デバイス情報を設定
+                set(userRef, {
+                    playerId: playerId,
+                    deviceId: deviceId,
+                    timestamp: Date.now()
+                });
+                
+                // プレイヤー情報を設定
+                const playerRef = ref(database, `players/${playerId}`);
                 set(playerRef, {
                     x: player.x,
                     y: player.y,
-                    type: player.playerType,
+                    character: selectedCharacter,
+                    deviceId: deviceId,
                     timestamp: Date.now()
                 });
+                
+                // 切断時の処理
+                onDisconnect(playerRef).remove();
+                onDisconnect(userRef).remove();
+                
+                // 他のプレイヤーを監視
+                onValue(playersRef, (snapshot) => {
+                    const players = snapshot.val();
+                    
+                    // ユニークデバイス数をカウント
+                    const uniqueDevices = new Set();
+                    if (players) {
+                        Object.values(players).forEach(player => {
+                            if (player.deviceId) {
+                                uniqueDevices.add(player.deviceId);
+                            }
+                        });
+                    }
+                    
+                    document.getElementById('user-count').textContent = uniqueDevices.size;
+                    
+                    if (players) {
+                        Object.keys(players).forEach(id => {
+                            if (id !== playerId) {
+                                updateOtherPlayer.call(gameScene, id, players[id]);
+                            }
+                        });
+                        
+                        // 削除されたプレイヤーをクリーンアップ
+                        Object.keys(otherPlayers).forEach(id => {
+                            if (!players[id]) {
+                                if (otherPlayers[id]) {
+                                    otherPlayers[id].destroy();
+                                    delete otherPlayers[id];
+                                }
+                            }
+                        });
+                    }
+                });
             }
+
+            function updateOtherPlayer(id, data) {
+                if (!otherPlayers[id]) {
+                    otherPlayers[id] = this.add.sprite(data.x, data.y, data.character || 'office-worker-1');
+                    otherPlayers[id].setScale(2);
+                    otherPlayers[id].setAlpha(0.9);
+                    otherPlayers[id].setDepth(100);
+                } else {
+                    otherPlayers[id].x = data.x;
+                    otherPlayers[id].y = data.y;
+                }
+            }
+
+            function update() {
+                const speed = 3;
+                let moved = false;
+                
+                if (cursors.left.isDown) {
+                    player.x -= speed;
+                    moved = true;
+                }
+                if (cursors.right.isDown) {
+                    player.x += speed;
+                    moved = true;
+                }
+                if (cursors.up.isDown) {
+                    player.y -= speed;
+                    moved = true;
+                }
+                if (cursors.down.isDown) {
+                    player.y += speed;
+                    moved = true;
+                }
+                
+                // 画面境界の制限
+                player.x = Phaser.Math.Clamp(player.x, 50, gameWidth - 50);
+                player.y = Phaser.Math.Clamp(player.y, 50, gameHeight - 50);
+                
+                if (moved) {
+                    const playerRef = ref(database, `players/${playerId}`);
+                    set(playerRef, {
+                        x: player.x,
+                        y: player.y,
+                        character: selectedCharacter,
+                        deviceId: deviceId,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+
+            function resize(gameSize) {
+                const width = gameSize.width;
+                const height = gameSize.height;
+                this.cameras.resize(width, height);
+            }
+
+            gameInstance = new Phaser.Game(config);
         }
 
         // ウィンドウリサイズ対応
         window.addEventListener('resize', () => {
-            game.scale.resize(window.innerWidth, window.innerHeight);
+            if (gameInstance) {
+                gameInstance.scale.resize(window.innerWidth, window.innerHeight);
+            }
         });
 
-        // ゲームを開始
-        const game = new Phaser.Game(config);
+        // 初期化
+        generateCharacterOptions();
     </script>
 </body>
 </html>
