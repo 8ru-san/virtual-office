@@ -3,158 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>詳細ピクセルアート バーチャルオフィス</title>
+    <title>カフェ バーチャルオフィス</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
-            font-family: 'Press Start 2P', monospace;
+            font-family: 'Noto Sans JP', sans-serif;
             overflow: hidden;
-            background: #0a0a0a;
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: crisp-edges;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E  50%, #F4A460 100%);
+            height: 100vh;
         }
-        #game-container {
+        
+        .main-container {
+            display: flex;
             width: 100vw;
             height: 100vh;
-            display: block;
+        }
+        
+        .game-area {
+            flex: 1;
             position: relative;
+            background: linear-gradient(180deg, #F5DEB3 0%, #DEB887 30%, #8B4513 100%);
         }
-        canvas {
-            display: block;
-            margin: 0 auto;
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: crisp-edges;
+        
+        .chat-area {
+            width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 3px solid #8B4513;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
         }
-        .ui-overlay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(20, 20, 40, 0.9);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            padding: 12px 16px;
-            font-size: 8px;
-            z-index: 1000;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        
+        .chat-header {
+            background: #8B4513;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
         }
-        .ui-overlay .title {
-            font-size: 10px;
-            margin-bottom: 4px;
-            color: #ff00ff;
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
         }
-        .ui-overlay .subtitle {
-            font-size: 6px;
-            color: #ffffff;
+        
+        .chat-input-area {
+            padding: 15px;
+            background: rgba(245, 222, 179, 0.9);
+            border-top: 2px solid #8B4513;
         }
-        .controls-hint {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(20, 20, 40, 0.9);
-            border: 2px solid #00ffff;
-            color: #ffffff;
+        
+        .chat-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #8B4513;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        .chat-input:focus {
+            border-color: #D2691E;
+            box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .message {
+            margin-bottom: 10px;
             padding: 8px 12px;
-            font-size: 6px;
-            z-index: 1000;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            background: rgba(139, 69, 19, 0.1);
+            border-radius: 15px;
+            border-left: 4px solid #8B4513;
         }
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #00ffff;
+        
+        .message-author {
+            font-weight: 500;
+            color: #8B4513;
             font-size: 12px;
-            z-index: 2000;
+            margin-bottom: 2px;
         }
+        
+        .message-text {
+            color: #333;
+            font-size: 14px;
+        }
+        
         .character-select {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(10, 10, 20, 0.95);
-            border: 3px solid #00ffff;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #8B4513;
+            border-radius: 15px;
+            padding: 30px;
             z-index: 3000;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
+        
         .character-select h2 {
-            color: #ff00ff;
-            font-size: 10px;
-            margin-bottom: 16px;
+            color: #8B4513;
+            font-size: 24px;
+            margin-bottom: 20px;
             text-align: center;
+            font-weight: 700;
         }
+        
         .character-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
+        
         .character-option {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #444;
-            background: #1a1a2a;
+            width: 80px;
+            height: 80px;
+            border: 3px solid #DDD;
+            border-radius: 15px;
+            background: #FFF;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            transition: all 0.3s ease;
         }
+        
         .character-option:hover {
-            border-color: #00ffff;
-            background: #2a2a3a;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            border-color: #D2691E;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(210, 105, 30, 0.3);
         }
+        
         .character-option.selected {
-            border-color: #ff00ff;
-            background: #3a2a3a;
-            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            border-color: #8B4513;
+            background: rgba(139, 69, 19, 0.1);
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(139, 69, 19, 0.4);
         }
+        
         .start-button {
             width: 100%;
-            padding: 12px;
-            background: #2a2a4a;
-            border: 2px solid #00ffff;
-            color: #ffffff;
+            padding: 15px;
+            background: #8B4513;
+            border: none;
+            border-radius: 25px;
+            color: white;
             font-family: inherit;
-            font-size: 8px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
+        
         .start-button:hover {
-            background: #3a3a5a;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            background: #A0522D;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #8B4513;
+            font-size: 18px;
+            font-weight: 700;
+            z-index: 2000;
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #8B4513;
+            color: #8B4513;
+            padding: 15px 20px;
+            border-radius: 15px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .ui-overlay .title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .ui-overlay .subtitle {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #8B4513;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #333;
+            z-index: 500;
+            backdrop-filter: blur(5px);
+            animation: bubbleFloat 0.5s ease-out;
+        }
+        
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #8B4513;
+        }
+        
+        @keyframes bubbleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes bubbleFadeOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.8);
+            }
         }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">Loading...</div>
+    <div class="loading" id="loading">カフェを準備中...</div>
     
     <div class="character-select" id="character-select">
-        <h2>Choose Your Avatar</h2>
+        <h2>マグカップを選んでください</h2>
         <div class="character-grid" id="character-grid">
-            <!-- キャラクター選択肢をここに動的生成 -->
+            <!-- マグカップ選択肢をここに動的生成 -->
         </div>
-        <button class="start-button" onclick="startGame()">Enter Office</button>
+        <button class="start-button" onclick="startGame()">カフェに入る</button>
     </div>
     
-    <div class="ui-overlay" id="ui-overlay" style="display: none;">
-        <div class="title">Cyber Office</div>
-        <div class="subtitle">Online: <span id="user-count">1</span></div>
-    </div>
-    
-    <div class="controls-hint" id="controls-hint" style="display: none;">
-        ← → Move • ↑ ↓ Change Floor
+    <div class="main-container" id="main-container" style="display: none;">
+        <div class="game-area" id="game-area">
+            <div class="ui-overlay" id="ui-overlay">
+                <div class="title">☕ Virtual Cafe</div>
+                <div class="subtitle">オンライン: <span id="user-count">1</span>人</div>
+            </div>
+        </div>
+        
+        <div class="chat-area">
+            <div class="chat-header">
+                💬 チャット
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message">
+                    <div class="message-author">システム</div>
+                    <div class="message-text">カフェへようこそ！メッセージを入力してみてください。</div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" class="chat-input" placeholder="メッセージを入力..." maxlength="100">
+            </div>
+        </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
@@ -176,12 +311,14 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        let selectedCharacter = 'office-worker-1';
+        let selectedMugColor = '#D2691E';
         let gameInstance = null;
         let playerId = null;
         let deviceId = null;
+        let gameScene = null;
+        let speechBubbles = [];
         
-        // デバイスIDを生成（重複カウント防止）
+        // デバイスIDを生成
         function generateDeviceId() {
             let id = localStorage.getItem('device-id');
             if (!id) {
@@ -191,33 +328,47 @@
             return id;
         }
         
-        // キャラクター選択肢を生成
-        function generateCharacterOptions() {
-            const characters = [
-                { id: 'office-worker-1', name: 'Business', colors: ['#2a2a3a', '#00ffff', '#ffffff'] },
-                { id: 'office-worker-2', name: 'Developer', colors: ['#1a1a2a', '#ff00ff', '#ffffff'] },
-                { id: 'office-worker-3', name: 'Designer', colors: ['#2a1a2a', '#ffff00', '#ffffff'] },
-                { id: 'office-worker-4', name: 'Manager', colors: ['#3a2a2a', '#ff0080', '#ffffff'] },
-                { id: 'office-worker-5', name: 'Engineer', colors: ['#2a3a2a', '#00ff80', '#ffffff'] },
-                { id: 'office-worker-6', name: 'Analyst', colors: ['#2a2a4a', '#8000ff', '#ffffff'] }
+        // マグカップ選択肢を生成
+        function generateMugOptions() {
+            const mugColors = [
+                { color: '#D2691E', name: 'キャラメル' },
+                { color: '#8B4513', name: 'エスプレッソ' },
+                { color: '#F4A460', name: 'ラテ' },
+                { color: '#CD853F', name: 'モカ' },
+                { color: '#DEB887', name: 'カプチーノ' },
+                { color: '#BC8F8F', name: 'ココア' }
             ];
             
             const grid = document.getElementById('character-grid');
-            characters.forEach((char, index) => {
+            mugColors.forEach((mug, index) => {
                 const option = document.createElement('div');
                 option.className = 'character-option';
-                option.onclick = () => selectCharacter(char.id, option);
+                option.onclick = () => selectMug(mug.color, option);
                 
-                // プレビュー
-                const preview = document.createElement('div');
-                preview.style.width = '20px';
-                preview.style.height = '28px';
-                preview.style.background = char.colors[0];
-                preview.style.border = `1px solid ${char.colors[1]}`;
-                preview.style.margin = 'auto';
-                preview.style.boxShadow = `0 0 5px ${char.colors[1]}`;
+                // マグカッププレビュー
+                option.innerHTML = `
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: ${mug.color};
+                        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+                        border: 3px solid #8B4513;
+                        position: relative;
+                        box-shadow: inset 0 -5px 10px rgba(0,0,0,0.2);
+                    ">
+                        <div style="
+                            position: absolute;
+                            right: -8px;
+                            top: 8px;
+                            width: 12px;
+                            height: 20px;
+                            border: 3px solid #8B4513;
+                            border-left: none;
+                            border-radius: 0 50% 50% 0;
+                        "></div>
+                    </div>
+                `;
                 
-                option.appendChild(preview);
                 grid.appendChild(option);
                 
                 if (index === 0) {
@@ -226,8 +377,8 @@
             });
         }
         
-        function selectCharacter(charId, element) {
-            selectedCharacter = charId;
+        function selectMug(color, element) {
+            selectedMugColor = color;
             document.querySelectorAll('.character-option').forEach(opt => opt.classList.remove('selected'));
             element.classList.add('selected');
         }
@@ -237,33 +388,34 @@
             playerId = 'player_' + Math.random().toString(36).substr(2, 9);
             
             document.getElementById('character-select').style.display = 'none';
-            document.getElementById('ui-overlay').style.display = 'block';
-            document.getElementById('controls-hint').style.display = 'block';
+            document.getElementById('main-container').style.display = 'flex';
             document.getElementById('loading').style.display = 'none';
             
             initializeGame();
+            setupChat();
         }
         
         window.startGame = startGame;
         
         function initializeGame() {
-            const gameWidth = window.innerWidth;
-            const gameHeight = window.innerHeight;
+            const gameArea = document.getElementById('game-area');
+            const gameWidth = gameArea.clientWidth;
+            const gameHeight = gameArea.clientHeight;
             
             const config = {
                 type: Phaser.AUTO,
                 width: gameWidth,
                 height: gameHeight,
-                backgroundColor: '#0a0a0a',
-                parent: 'game-container',
+                backgroundColor: '#F5DEB3',
+                parent: 'game-area',
                 scale: {
                     mode: Phaser.Scale.RESIZE,
                     autoCenter: Phaser.Scale.CENTER_BOTH
                 },
                 render: {
-                    pixelArt: true,
-                    antialias: false,
-                    roundPixels: true
+                    pixelArt: false,
+                    antialias: true,
+                    roundPixels: false
                 },
                 scene: {
                     preload: preload,
@@ -276,495 +428,162 @@
             let player;
             let cursors;
             let otherPlayers = {};
-            let gameScene;
-            let currentFloor = 0; // 0: 1階, 1: 2階
 
             function preload() {
                 gameScene = this;
+                createCafeAssets.call(this);
+            }
+            
+            function createCafeAssets() {
+                // カフェテーブル（長方形）
+                this.add.graphics()
+                    .fillStyle(0x8B4513) // ダークブラウン
+                    .fillRoundedRect(0, 0, 800, 120, 15)
+                    .fillStyle(0xA0522D) // テーブル表面
+                    .fillRoundedRect(10, 10, 780, 100, 10)
+                    .fillStyle(0x654321) // 木目模様
+                    .fillRect(20, 20, 760, 4)
+                    .fillRect(20, 30, 760, 4)
+                    .fillRect(20, 40, 760, 4)
+                    .fillRect(20, 50, 760, 4)
+                    .fillRect(20, 60, 760, 4)
+                    .fillRect(20, 70, 760, 4)
+                    .fillRect(20, 80, 760, 4)
+                    .fillRect(20, 90, 760, 4)
+                    .generateTexture('cafe-table', 800, 120);
+
+                // マグカップアセット生成
+                this.createMugAsset(selectedMugColor, 'player-mug');
                 
-                // 詳細ピクセルアートを生成
-                createDetailedPixelAssets.call(this);
+                // 他プレイヤー用のマグカップも事前生成
+                const colors = ['#D2691E', '#8B4513', '#F4A460', '#CD853F', '#DEB887', '#BC8F8F'];
+                colors.forEach((color, index) => {
+                    this.createMugAsset(color, `mug-${index}`);
+                });
             }
             
-            function createDetailedPixelAssets() {
-                // 詳細なオフィスワーカーキャラクター（サイバーパンク風）
-                this.add.graphics()
-                    .fillStyle(0xffdbac) // 肌色
-                    .fillRect(12, 4, 8, 8) // 頭
-                    .fillStyle(0x4a4a6a) // グレーヘア
-                    .fillRect(10, 2, 12, 6)
-                    .fillStyle(0x2a2a3a) // サイバースーツ本体
-                    .fillRect(8, 12, 16, 24)
-                    .fillStyle(0x00ffff) // ネオンライン
-                    .fillRect(10, 12, 2, 24)
-                    .fillRect(20, 12, 2, 24)
-                    .fillRect(12, 14, 8, 2)
-                    .fillStyle(0xffffff) // シャツ
-                    .fillRect(12, 16, 8, 12)
-                    .fillStyle(0x00ffff) // ネオンネクタイ
-                    .fillRect(14, 16, 4, 8)
-                    .fillStyle(0xffdbac) // 腕
-                    .fillRect(4, 16, 6, 12)
-                    .fillRect(22, 16, 6, 12)
-                    .fillStyle(0x1a1a2a) // パンツ
-                    .fillRect(10, 36, 12, 16)
-                    .fillStyle(0x0a0a1a) // 靴
-                    .fillRect(8, 52, 6, 8)
-                    .fillRect(18, 52, 6, 8)
-                    .fillStyle(0x00ffff) // 靴のライン
-                    .fillRect(8, 54, 6, 2)
-                    .fillRect(18, 54, 6, 2)
-                    .generateTexture('office-worker-1', 32, 64);
-
-                // デベロッパーキャラクター
-                this.add.graphics()
-                    .fillStyle(0xffdbac)
-                    .fillRect(12, 4, 8, 8)
-                    .fillStyle(0x2a1a2a) // 暗い髪
-                    .fillRect(10, 2, 12, 6)
-                    .fillStyle(0x1a1a2a) // フーディー
-                    .fillRect(8, 12, 16, 24)
-                    .fillStyle(0xff00ff) // ピンクライン
-                    .fillRect(10, 12, 2, 24)
-                    .fillRect(20, 12, 2, 24)
-                    .fillStyle(0x000000) // Tシャツ
-                    .fillRect(12, 16, 8, 12)
-                    .fillStyle(0xff00ff) // ロゴ
-                    .fillRect(14, 18, 4, 4)
-                    .fillStyle(0xffdbac)
-                    .fillRect(4, 16, 6, 12)
-                    .fillRect(22, 16, 6, 12)
-                    .fillStyle(0x2a2a4a) // ジーンズ
-                    .fillRect(10, 36, 12, 16)
-                    .fillStyle(0x1a1a1a) // スニーカー
-                    .fillRect(8, 52, 6, 8)
-                    .fillRect(18, 52, 6, 8)
-                    .fillStyle(0xff00ff)
-                    .fillRect(8, 54, 6, 2)
-                    .fillRect(18, 54, 6, 2)
-                    .generateTexture('office-worker-2', 32, 64);
-
-                // 他のキャラクターも同様に作成...
-                // [省略して3-6も作成]
-
-                // 詳細な背景要素を作成
-                this.createDetailedBackground();
-                this.createDetailedFurniture();
-            }
-            
-            Phaser.Scene.prototype.createDetailedBackground = function() {
-                // 天井の作成（詳細ピクセルアート）
-                this.add.graphics()
-                    .fillStyle(0x1a1a2a) // ベース色
-                    .fillRect(0, 0, 2048, 120)
-                    .fillStyle(0x2a2a3a) // 天井パネルのライン
-                    .fillRect(0, 20, 2048, 2)
-                    .fillRect(0, 40, 2048, 2)
-                    .fillRect(0, 60, 2048, 2)
-                    .fillRect(0, 80, 2048, 2)
-                    .fillStyle(0x00ffff) // ネオンライト
-                    .fillRect(100, 10, 200, 4)
-                    .fillRect(400, 10, 200, 4)
-                    .fillRect(700, 10, 200, 4)
-                    .fillRect(1000, 10, 200, 4)
-                    .fillRect(1300, 10, 200, 4)
-                    .fillRect(1600, 10, 200, 4)
-                    .generateTexture('detailed-ceiling', 2048, 120);
-
-                // 壁の作成
-                this.add.graphics()
-                    .fillStyle(0x2a2a3a) // 壁のベース
-                    .fillRect(0, 0, 2048, 200)
-                    .fillStyle(0x3a3a4a) // 壁のパネル
-                    .fillRect(0, 20, 2048, 160)
-                    .fillStyle(0x1a1a2a) // パネルの境界線
-                    .fillRect(0, 40, 2048, 2)
-                    .fillRect(0, 80, 2048, 2)
-                    .fillRect(0, 120, 2048, 2)
-                    .fillRect(0, 160, 2048, 2)
-                    // 縦のパネル線
-                    .fillRect(200, 20, 2, 160)
-                    .fillRect(400, 20, 2, 160)
-                    .fillRect(600, 20, 2, 160)
-                    .fillRect(800, 20, 2, 160)
-                    .fillRect(1000, 20, 2, 160)
-                    .fillRect(1200, 20, 2, 160)
-                    .fillRect(1400, 20, 2, 160)
-                    .fillRect(1600, 20, 2, 160)
-                    .fillRect(1800, 20, 2, 160)
-                    // ネオンサイン
-                    .fillStyle(0xff00ff)
-                    .fillRect(150, 50, 100, 20)
-                    .fillRect(450, 50, 100, 20)
-                    .fillRect(750, 50, 100, 20)
-                    .fillRect(1050, 50, 100, 20)
-                    .fillRect(1350, 50, 100, 20)
-                    .fillStyle(0x00ffff)
-                    .fillRect(300, 100, 80, 15)
-                    .fillRect(650, 100, 80, 15)
-                    .fillRect(950, 100, 80, 15)
-                    .fillRect(1250, 100, 80, 15)
-                    .generateTexture('detailed-wall', 2048, 200);
-
-                // 床の作成（詳細なタイルパターン）
-                this.add.graphics()
-                    .fillStyle(0x3a3a4a) // ベース床
-                    .fillRect(0, 0, 2048, 300)
-                    .fillStyle(0x4a4a5a) // 明るいタイル
-                    .fillRect(0, 0, 64, 64)
-                    .fillRect(128, 0, 64, 64)
-                    .fillRect(256, 0, 64, 64)
-                    .fillRect(384, 0, 64, 64)
-                    .fillRect(512, 0, 64, 64)
-                    .fillRect(640, 0, 64, 64)
-                    .fillRect(768, 0, 64, 64)
-                    .fillRect(896, 0, 64, 64)
-                    // 2行目（オフセット）
-                    .fillRect(64, 64, 64, 64)
-                    .fillRect(192, 64, 64, 64)
-                    .fillRect(320, 64, 64, 64)
-                    .fillRect(448, 64, 64, 64)
-                    .fillRect(576, 64, 64, 64)
-                    .fillRect(704, 64, 64, 64)
-                    .fillRect(832, 64, 64, 64)
-                    // ライン
-                    .fillStyle(0x2a2a3a)
-                    .fillRect(0, 64, 2048, 2)
-                    .fillRect(0, 128, 2048, 2)
-                    .fillRect(0, 192, 2048, 2)
-                    .fillRect(0, 256, 2048, 2)
-                    // 縦ライン
-                    .fillRect(64, 0, 2, 300)
-                    .fillRect(128, 0, 2, 300)
-                    .fillRect(192, 0, 2, 300)
-                    .fillRect(256, 0, 2, 300)
-                    .fillRect(320, 0, 2, 300)
-                    .fillRect(384, 0, 2, 300)
-                    .fillRect(448, 0, 2, 300)
-                    .fillRect(512, 0, 2, 300)
-                    .fillRect(576, 0, 2, 300)
-                    .fillRect(640, 0, 2, 300)
-                    .fillRect(704, 0, 2, 300)
-                    .fillRect(768, 0, 2, 300)
-                    .fillRect(832, 0, 2, 300)
-                    .fillRect(896, 0, 2, 300)
-                    .generateTexture('detailed-floor', 2048, 300);
-            };
-
-            Phaser.Scene.prototype.createDetailedFurniture = function() {
-                // 詳細なデスクワークステーション
-                this.add.graphics()
-                    .fillStyle(0x4a3a2a) // 木材ベース
-                    .fillRect(0, 40, 120, 16) // デスクトップ
-                    .fillStyle(0x3a2a1a) // 影
-                    .fillRect(0, 56, 120, 8)
-                    .fillStyle(0x4a3a2a) // 脚
-                    .fillRect(8, 56, 16, 32)
-                    .fillRect(96, 56, 16, 32)
-                    // モニター
-                    .fillStyle(0x1a1a1a) // モニター本体
-                    .fillRect(30, 8, 60, 40)
-                    .fillStyle(0x2a2a2a) // フレーム
-                    .fillRect(28, 6, 64, 44)
-                    .fillStyle(0x0a0a2a) // 画面
-                    .fillRect(32, 10, 56, 32)
-                    .fillStyle(0x00ffff) // 画面の光
-                    .fillRect(34, 12, 52, 28)
-                    .fillStyle(0xff00ff) // 画面の詳細
-                    .fillRect(36, 14, 8, 4)
-                    .fillRect(48, 14, 8, 4)
-                    .fillRect(60, 14, 8, 4)
-                    .fillRect(72, 14, 8, 4)
-                    .fillRect(36, 20, 48, 2)
-                    .fillRect(36, 24, 48, 2)
-                    .fillRect(36, 28, 48, 2)
-                    .fillRect(36, 32, 48, 2)
-                    // キーボード
-                    .fillStyle(0x2a2a2a)
-                    .fillRect(35, 48, 50, 8)
-                    .fillStyle(0x4a4a4a) // キー
-                    .fillRect(37, 50, 4, 4)
-                    .fillRect(43, 50, 4, 4)
-                    .fillRect(49, 50, 4, 4)
-                    .fillRect(55, 50, 4, 4)
-                    .fillRect(61, 50, 4, 4)
-                    .fillRect(67, 50, 4, 4)
-                    .fillRect(73, 50, 4, 4)
-                    .fillRect(79, 50, 4, 4)
-                    // マウス
-                    .fillStyle(0x3a3a3a)
-                    .fillRect(95, 48, 12, 8)
-                    .fillStyle(0x5a5a5a)
-                    .fillRect(97, 50, 3, 4)
-                    .fillRect(103, 50, 3, 4)
-                    .generateTexture('detailed-desk', 120, 88);
-
-                // 詳細なオフィスチェア
-                this.add.graphics()
-                    .fillStyle(0x2a2a3a) // チェア本体
-                    .fillRect(16, 16, 32, 32)
-                    .fillStyle(0x3a3a4a) // 背もたれ
-                    .fillRect(12, 8, 40, 24)
-                    .fillStyle(0x1a1a2a) // フレーム
-                    .fillRect(14, 6, 36, 28)
-                    .fillStyle(0x2a2a2a) // 脚の支柱
-                    .fillRect(30, 48, 4, 24)
-                    .fillStyle(0x1a1a1a) // キャスター脚
-                    .fillRect(20, 72, 24, 4)
-                    .fillRect(28, 68, 8, 8)
-                    .fillStyle(0x4a4a4a) // キャスター
-                    .fillRect(18, 74, 4, 4)
-                    .fillRect(42, 74, 4, 4)
-                    .fillRect(16, 70, 4, 4)
-                    .fillRect(44, 70, 4, 4)
-                    .fillRect(30, 76, 4, 4)
-                    // 座面の詳細
-                    .fillStyle(0x4a4a5a)
-                    .fillRect(18, 18, 28, 28)
-                    .fillStyle(0x00ffff) // ネオンアクセント
-                    .fillRect(18, 20, 28, 2)
-                    .fillRect(18, 42, 28, 2)
-                    .fillRect(20, 18, 2, 28)
-                    .fillRect(42, 18, 2, 28)
-                    .generateTexture('detailed-chair', 64, 80);
-
-                // サイバーパンク風会議テーブル
-                this.add.graphics()
-                    .fillStyle(0x2a2a4a) // テーブルトップ
-                    .fillRect(0, 32, 200, 24)
-                    .fillStyle(0x1a1a3a) // 影
-                    .fillRect(0, 56, 200, 8)
-                    .fillStyle(0x00ffff) // ネオンエッジ
-                    .fillRect(0, 32, 200, 4)
-                    .fillRect(0, 52, 200, 4)
-                    .fillStyle(0xff00ff) // サイドライン
-                    .fillRect(0, 38, 4, 14)
-                    .fillRect(196, 38, 4, 14)
-                    .fillStyle(0x2a2a4a) // 脚
-                    .fillRect(16, 56, 20, 40)
-                    .fillRect(164, 56, 20, 40)
-                    .fillStyle(0x00ffff) // 脚のライト
-                    .fillRect(18, 58, 16, 4)
-                    .fillRect(166, 58, 16, 4)
-                    .fillRect(18, 88, 16, 4)
-                    .fillRect(166, 88, 16, 4)
-                    // ホログラム投影装置
-                    .fillStyle(0x4a4a6a)
-                    .fillRect(90, 36, 20, 16)
-                    .fillStyle(0x00ffff)
-                    .fillRect(92, 38, 16, 4)
-                    .fillRect(92, 46, 16, 4)
-                    .fillStyle(0xff00ff)
-                    .fillRect(96, 40, 8, 4)
-                    .generateTexture('cyber-meeting-table', 200, 96);
-
-                // ネオン装飾植物
-                this.add.graphics()
-                    .fillStyle(0x2a2a4a) // ハイテク鉢
-                    .fillRect(8, 40, 48, 24)
-                    .fillStyle(0x1a1a3a) // 影
-                    .fillRect(8, 56, 48, 8)
-                    .fillStyle(0x00ffff) // 鉢のライト
-                    .fillRect(8, 42, 48, 4)
-                    .fillRect(8, 58, 48, 4)
-                    .fillStyle(0x2a4a2a) // 人工植物の幹
-                    .fillRect(28, 20, 8, 24)
-                    .fillStyle(0x00ff80) // ネオン葉
-                    .fillCircle(32, 20, 16)
-                    .fillStyle(0x80ff00) // ハイライト葉
-                    .fillCircle(28, 16, 8)
-                    .fillCircle(36, 16, 8)
-                    .fillCircle(24, 24, 6)
-                    .fillCircle(40, 24, 6)
-                    .fillStyle(0xff00ff) // 光るフルーツ
-                    .fillCircle(26, 18, 3)
-                    .fillCircle(38, 18, 3)
-                    .fillCircle(32, 14, 3)
-                    .generateTexture('cyber-plant', 64, 64);
-
-                // ハイテクコーヒーマシン
-                this.add.graphics()
-                    .fillStyle(0x3a3a5a) // 本体
-                    .fillRect(8, 16, 48, 48)
-                    .fillStyle(0x2a2a4a) // パネル
-                    .fillRect(12, 20, 40, 8)
-                    .fillRect(12, 32, 40, 16)
-                    .fillRect(12, 52, 40, 8)
-                    .fillStyle(0x00ffff) // ディスプレイ
-                    .fillRect(14, 22, 36, 4)
-                    .fillRect(14, 34, 16, 12)
-                    .fillStyle(0xff00ff) // ボタン
-                    .fillRect(34, 34, 6, 4)
-                    .fillRect(42, 34, 6, 4)
-                    .fillRect(34, 40, 6, 4)
-                    .fillRect(42, 40, 6, 4)
-                    .fillStyle(0xffff00) // 警告ライト
-                    .fillRect(50, 36, 4, 4)
-                    .fillRect(50, 42, 4, 4)
-                    .fillStyle(0x4a3a2a) // カップ
-                    .fillRect(22, 56, 12, 8)
-                    .fillStyle(0x6a4a2a) // コーヒー
-                    .fillRect(24, 58, 8, 4)
-                    .fillStyle(0x8a6a4a) // 泡
-                    .fillRect(26, 58, 4, 2)
-                    .generateTexture('cyber-coffee', 64, 64);
+            Phaser.Scene.prototype.createMugAsset = function(color, key) {
+                const graphics = this.add.graphics();
+                
+                // マグカップ本体
+                graphics.fillStyle(parseInt(color.replace('#', '0x')));
+                graphics.fillRoundedRect(0, 20, 40, 50, 20);
+                
+                // ハンドル
+                graphics.lineStyle(4, 0x8B4513);
+                graphics.strokeCircle(45, 35, 12);
+                
+                // カップの縁
+                graphics.fillStyle(0x8B4513);
+                graphics.fillEllipse(20, 25, 40, 10);
+                
+                // コーヒー表面
+                graphics.fillStyle(0x3E2723);
+                graphics.fillEllipse(20, 25, 35, 8);
+                
+                // 湯気エフェクト
+                graphics.fillStyle(0xFFFFFF);
+                graphics.fillCircle(15, 15, 2);
+                graphics.fillCircle(20, 10, 2);
+                graphics.fillCircle(25, 15, 2);
+                graphics.fillCircle(30, 8, 2);
+                
+                graphics.generateTexture(key, 60, 80);
+                graphics.destroy();
             };
 
             function create() {
-                // 横スクロール型のサイバーパンクオフィスを作成
-                this.createCyberOffice();
+                const gameWidth = this.cameras.main.width;
+                const gameHeight = this.cameras.main.height;
                 
-                // プレイヤー作成（床エリアに配置）
-                const startX = 200;
-                const floorY = gameHeight - 150; // 床エリア
+                // カフェ背景を作成
+                this.createCafeBackground(gameWidth, gameHeight);
                 
-                player = this.add.sprite(startX, floorY, selectedCharacter);
-                player.setScale(1.5);
+                // テーブル配置（画面下部）
+                const tableY = gameHeight - 120;
+                const table = this.add.image(gameWidth / 2, tableY, 'cafe-table');
+                table.setDisplaySize(gameWidth - 40, 120);
+                table.setDepth(1);
+                
+                // プレイヤー作成（テーブル上に配置）
+                const startX = 100;
+                const playerY = tableY - 40; // テーブルの上
+                
+                player = this.add.sprite(startX, playerY, 'player-mug');
+                player.setScale(1.0);
                 player.playerId = playerId;
-                player.currentFloor = 0;
                 player.setDepth(200);
-                
-                // プレイヤーにサイバーエフェクト
-                const playerGlow = this.add.circle(player.x, player.y, 30, 0x00ffff, 0.3);
-                playerGlow.setDepth(190);
-                player.glowEffect = playerGlow;
                 
                 cursors = this.input.keyboard.createCursorKeys();
                 
-                // カメラ設定（横スクロール）
-                this.cameras.main.setBounds(0, 0, 2048, gameHeight);
-                this.cameras.main.startFollow(player);
-                this.cameras.main.setFollowOffset(-gameWidth/4, 0); // プレイヤーを左寄りに
+                // カメラ設定
+                this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
                 
                 // Firebase接続処理
                 setupFirebaseConnection();
             }
 
-            Phaser.Scene.prototype.createCyberOffice = function() {
-                const gameHeight = this.cameras.main.height;
+            Phaser.Scene.prototype.createCafeBackground = function(width, height) {
+                // カフェの背景（グラデーション）
+                const bg = this.add.graphics();
+                bg.fillGradientStyle(0xF5DEB3, 0xF5DEB3, 0xDEB887, 0xDEB887, 1);
+                bg.fillRect(0, 0, width, height);
+                bg.setDepth(-100);
                 
-                // 背景レイヤー配置
-                // 天井
-                const ceiling = this.add.image(1024, 60, 'detailed-ceiling');
-                ceiling.setDepth(-100);
-                
-                // 壁（奥行き感のある配置）
-                const wall = this.add.image(1024, 220, 'detailed-wall');
-                wall.setDepth(-50);
-                
-                // 床
-                const floor = this.add.image(1024, gameHeight - 150, 'detailed-floor');
-                floor.setDepth(-10);
-                
-                // ワークステーションエリア（左側）
-                for (let i = 0; i < 8; i++) {
-                    const x = 150 + i * 180;
-                    const y = gameHeight - 240; // 壁際に配置
-                    
-                    this.add.image(x, y, 'detailed-desk').setScale(1.2).setDepth(10);
-                    this.add.image(x, y + 100, 'detailed-chair').setScale(1.2).setDepth(10);
+                // カフェの装飾
+                // コーヒー豆の装飾
+                for (let i = 0; i < 20; i++) {
+                    const x = Math.random() * width;
+                    const y = Math.random() * (height - 200);
+                    const bean = this.add.ellipse(x, y, 8, 12, 0x3E2723, 0.3);
+                    bean.setDepth(-50);
                 }
                 
-                // 会議エリア（中央）
-                const meetingX = 900;
-                const meetingY = gameHeight - 200;
-                this.add.image(meetingX, meetingY, 'cyber-meeting-table').setScale(1.5).setDepth(10);
+                // カフェメニューボード（装飾）
+                const menu = this.add.rectangle(width - 150, 100, 120, 150, 0x8B4513);
+                menu.setDepth(-10);
                 
-                // 会議テーブル周りのチェア
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i / 6) * Math.PI * 2;
-                    const chairX = meetingX + Math.cos(angle) * 120;
-                    const chairY = meetingY + Math.sin(angle) * 60;
-                    this.add.image(chairX, chairY, 'detailed-chair').setScale(1.0).setDepth(10);
-                }
-                
-                // リラックスエリア（右側）
-                const relaxX = 1500;
-                this.add.image(relaxX, gameHeight - 280, 'cyber-coffee').setScale(2).setDepth(10);
-                this.add.image(relaxX - 100, gameHeight - 200, 'cyber-plant').setScale(1.5).setDepth(10);
-                this.add.image(relaxX + 100, gameHeight - 200, 'cyber-plant').setScale(1.5).setDepth(10);
-                
-                // 個人ワークブース（右端）
-                for (let i = 0; i < 3; i++) {
-                    const x = 1700 + i * 100;
-                    const y = gameHeight - 240;
-                    this.add.image(x, y, 'detailed-desk').setScale(1.0).setDepth(10);
-                    this.add.image(x, y + 80, 'detailed-chair').setScale(1.0).setDepth(10);
-                }
-                
-                // アンビエントライト効果
-                for (let i = 0; i < 10; i++) {
-                    const x = 200 + i * 180;
-                    const lightColor = i % 2 === 0 ? 0x00ffff : 0xff00ff;
-                    const light = this.add.circle(x, gameHeight - 300, 50, lightColor, 0.1);
-                    light.setDepth(-5);
-                }
-                
-                // 床の境界線（プレイヤーの移動可能エリア）
-                const walkArea = this.add.rectangle(1024, gameHeight - 80, 2048, 120, 0x4a4a5a, 0.1);
-                walkArea.setDepth(-5);
-                
-                // ネオンサイン（装飾）
-                this.createNeonSigns();
-            };
-
-            Phaser.Scene.prototype.createNeonSigns = function() {
-                const gameHeight = this.cameras.main.height;
-                
-                // "CYBER OFFICE"サイン
-                this.add.rectangle(400, gameHeight - 350, 200, 40, 0x000000, 0.8).setDepth(15);
-                this.add.rectangle(400, gameHeight - 350, 196, 36, 0x00ffff, 0.3).setDepth(16);
-                this.add.text(400, gameHeight - 350, 'CYBER OFFICE', {
+                const menuText = this.add.text(width - 150, 100, 'MENU\n\n☕ Coffee\n🥐 Croissant\n🍰 Cake', {
                     fontSize: '12px',
-                    fill: '#00ffff',
-                    fontFamily: 'Press Start 2P'
-                }).setOrigin(0.5).setDepth(17);
-                
-                // "MEETING ZONE"サイン
-                this.add.rectangle(900, gameHeight - 350, 180, 30, 0x000000, 0.8).setDepth(15);
-                this.add.rectangle(900, gameHeight - 350, 176, 26, 0xff00ff, 0.3).setDepth(16);
-                this.add.text(900, gameHeight - 350, 'MEETING ZONE', {
-                    fontSize: '8px',
-                    fill: '#ff00ff',
-                    fontFamily: 'Press Start 2P'
-                }).setOrigin(0.5).setDepth(17);
-                
-                // "RELAX AREA"サイン
-                this.add.rectangle(1500, gameHeight - 350, 160, 30, 0x000000, 0.8).setDepth(15);
-                this.add.rectangle(1500, gameHeight - 350, 156, 26, 0x00ff80, 0.3).setDepth(16);
-                this.add.text(1500, gameHeight - 350, 'RELAX AREA', {
-                    fontSize: '8px',
-                    fill: '#00ff80',
-                    fontFamily: 'Press Start 2P'
-                }).setOrigin(0.5).setDepth(17);
+                    fill: '#FFFFFF',
+                    align: 'center',
+                    fontFamily: 'Arial'
+                });
+                menuText.setOrigin(0.5);
+                menuText.setDepth(-5);
             };
 
             function setupFirebaseConnection() {
                 const userRef = ref(database, `users/${deviceId}`);
                 const playersRef = ref(database, 'players');
+                const messagesRef = ref(database, 'messages');
                 
+                // ユーザー登録
                 set(userRef, {
                     playerId: playerId,
                     deviceId: deviceId,
                     timestamp: Date.now()
                 });
                 
+                // プレイヤー位置登録
                 const playerRef = ref(database, `players/${playerId}`);
                 set(playerRef, {
                     x: player.x,
                     y: player.y,
-                    character: selectedCharacter,
+                    mugColor: selectedMugColor,
                     deviceId: deviceId,
-                    floor: 0,
                     timestamp: Date.now()
                 });
                 
+                // 切断時のクリーンアップ
                 onDisconnect(playerRef).remove();
                 onDisconnect(userRef).remove();
                 
+                // 他プレイヤーの監視
                 onValue(playersRef, (snapshot) => {
                     const players = snapshot.val();
                     
+                    // ユニークデバイス数をカウント
                     const uniqueDevices = new Set();
                     if (players) {
                         Object.values(players).forEach(player => {
@@ -776,6 +595,7 @@
                     
                     document.getElementById('user-count').textContent = uniqueDevices.size;
                     
+                    // 他プレイヤーの更新
                     if (players) {
                         Object.keys(players).forEach(id => {
                             if (id !== playerId) {
@@ -783,75 +603,58 @@
                             }
                         });
                         
+                        // 存在しないプレイヤーの削除
                         Object.keys(otherPlayers).forEach(id => {
                             if (!players[id]) {
                                 if (otherPlayers[id]) {
                                     otherPlayers[id].destroy();
-                                    if (otherPlayers[id].glowEffect) {
-                                        otherPlayers[id].glowEffect.destroy();
-                                    }
                                     delete otherPlayers[id];
                                 }
                             }
                         });
                     }
                 });
+                
+                // メッセージの監視
+                onValue(messagesRef, (snapshot) => {
+                    const messages = snapshot.val();
+                    if (messages) {
+                        const messageArray = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
+                        displayMessages(messageArray);
+                    }
+                });
             }
 
             function updateOtherPlayer(id, data) {
                 if (!otherPlayers[id]) {
-                    otherPlayers[id] = this.add.sprite(data.x, data.y, data.character || 'office-worker-1');
-                    otherPlayers[id].setScale(1.5);
+                    // 新しいプレイヤーの作成
+                    const mugColorIndex = ['#D2691E', '#8B4513', '#F4A460', '#CD853F', '#DEB887', '#BC8F8F']
+                        .indexOf(data.mugColor) || 0;
+                    
+                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
+                    otherPlayers[id].setScale(1.0);
                     otherPlayers[id].setAlpha(0.9);
                     otherPlayers[id].setDepth(200);
-                    
-                    // 他のプレイヤーにもグロー効果
-                    const glowEffect = this.add.circle(data.x, data.y, 30, 0xff00ff, 0.2);
-                    glowEffect.setDepth(190);
-                    otherPlayers[id].glowEffect = glowEffect;
                 } else {
+                    // 位置更新
                     otherPlayers[id].x = data.x;
                     otherPlayers[id].y = data.y;
-                    if (otherPlayers[id].glowEffect) {
-                        otherPlayers[id].glowEffect.x = data.x;
-                        otherPlayers[id].glowEffect.y = data.y;
-                    }
                 }
             }
 
             function update() {
-                const speed = 4;
+                const speed = 3;
                 let moved = false;
-                const gameHeight = this.cameras.main.height;
+                const gameWidth = this.cameras.main.width;
                 
-                // 左右移動（横スクロール）
-                if (cursors.left.isDown) {
+                // 左右移動のみ
+                if (cursors.left.isDown && player.x > 50) {
                     player.x -= speed;
                     moved = true;
                 }
-                if (cursors.right.isDown) {
+                if (cursors.right.isDown && player.x < gameWidth - 50) {
                     player.x += speed;
                     moved = true;
-                }
-                
-                // 上下移動（床エリア内での前後移動）
-                if (cursors.up.isDown && player.y > gameHeight - 180) {
-                    player.y -= speed * 0.5; // ゆっくり奥へ
-                    moved = true;
-                }
-                if (cursors.down.isDown && player.y < gameHeight - 50) {
-                    player.y += speed * 0.5; // ゆっくり手前へ
-                    moved = true;
-                }
-                
-                // 移動範囲制限
-                player.x = Phaser.Math.Clamp(player.x, 50, 2000);
-                player.y = Phaser.Math.Clamp(player.y, gameHeight - 180, gameHeight - 50);
-                
-                // グロー効果を追従
-                if (player.glowEffect) {
-                    player.glowEffect.x = player.x;
-                    player.glowEffect.y = player.y;
                 }
                 
                 if (moved) {
@@ -859,9 +662,8 @@
                     set(playerRef, {
                         x: player.x,
                         y: player.y,
-                        character: selectedCharacter,
+                        mugColor: selectedMugColor,
                         deviceId: deviceId,
-                        floor: currentFloor,
                         timestamp: Date.now()
                     });
                 }
@@ -875,16 +677,105 @@
 
             gameInstance = new Phaser.Game(config);
         }
-
+        
+        function setupChat() {
+            const chatInput = document.getElementById('chat-input');
+            
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && chatInput.value.trim()) {
+                    sendMessage(chatInput.value.trim());
+                    chatInput.value = '';
+                }
+            });
+        }
+        
+        function sendMessage(text) {
+            const messagesRef = ref(database, 'messages');
+            const messageRef = push(messagesRef);
+            
+            set(messageRef, {
+                playerId: playerId,
+                text: text,
+                timestamp: Date.now(),
+                mugColor: selectedMugColor
+            });
+            
+            // 吹き出し表示
+            showSpeechBubble(text);
+        }
+        
+        function showSpeechBubble(text) {
+            if (!gameScene || !gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = document.getElementById('game-area');
+            const bubble = document.createElement('div');
+            bubble.className = 'speech-bubble';
+            bubble.textContent = text;
+            
+            // プレイヤー位置に合わせて配置
+            const player = gameScene.sys.game.scene.scenes[0].children.list.find(obj => obj.playerId === playerId);
+            if (player) {
+                const x = player.x - 50;
+                const y = player.y - 80;
+                
+                bubble.style.left = x + 'px';
+                bubble.style.top = y + 'px';
+            }
+            
+            gameArea.appendChild(bubble);
+            speechBubbles.push(bubble);
+            
+            // 3秒後に削除
+            setTimeout(() => {
+                bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                    const index = speechBubbles.indexOf(bubble);
+                    if (index > -1) {
+                        speechBubbles.splice(index, 1);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">カフェへようこそ！メッセージを入力してみてください。</div></div>';
+            
+            messages.slice(-20).forEach(message => { // 最新20件のみ表示
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                
+                const author = document.createElement('div');
+                author.className = 'message-author';
+                author.textContent = `☕ ゲスト`;
+                author.style.color = message.mugColor || '#8B4513';
+                
+                const text = document.createElement('div');
+                text.className = 'message-text';
+                text.textContent = message.text;
+                
+                messageDiv.appendChild(author);
+                messageDiv.appendChild(text);
+                chatMessages.appendChild(messageDiv);
+            });
+            
+            // 自動スクロール
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
         // ウィンドウリサイズ対応
         window.addEventListener('resize', () => {
             if (gameInstance) {
-                gameInstance.scale.resize(window.innerWidth, window.innerHeight);
+                const gameArea = document.getElementById('game-area');
+                gameInstance.scale.resize(gameArea.clientWidth, gameArea.clientHeight);
             }
         });
 
         // 初期化
-        generateCharacterOptions();
+        generateMugOptions();
     </script>
 </body>
 </html>
