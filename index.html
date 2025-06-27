@@ -239,7 +239,7 @@
         .ui-overlay {
             position: absolute;
             top: 20px;
-            left: 20px;
+            right: 20px;
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #8B4513;
             color: #8B4513;
@@ -247,6 +247,7 @@
             border-radius: 15px;
             z-index: 1000;
             backdrop-filter: blur(10px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .ui-overlay .title {
@@ -827,11 +828,11 @@
                 this.createBookshelf(50, 50, 120, height - 200);
                 this.createBookshelf(width - 170, 50, 120, height - 200);
                 
-                // メニューボード
-                const menuX = width - 250;
-                const menuY = 120;
-                const menuWidth = 180;
-                const menuHeight = 200;
+                // メニューボード（大きめに修正）
+                const menuX = width - 300;
+                const menuY = 140;
+                const menuWidth = 220;
+                const menuHeight = 240;
                 
                 const menuBoard = this.add.graphics();
                 menuBoard.fillStyle(0x4A4A4A);
@@ -840,12 +841,12 @@
                 menuBoard.fillRoundedRect(menuX - menuWidth/2 + 10, menuY - menuHeight/2 + 10, menuWidth - 20, menuHeight - 20, 5);
                 menuBoard.setDepth(10);
                 
-                const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🍵 抹茶ラテ ¥480', {
-                    fontSize: '14px',
+                const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🍵 抹茶ラテ ¥480\n🧁 ハリネズミケーキ ¥520', {
+                    fontSize: '16px',
                     fill: '#FFFFFF',
                     align: 'center',
                     fontFamily: 'Noto Sans JP',
-                    lineSpacing: 5
+                    lineSpacing: 8
                 });
                 menuText.setOrigin(0.5);
                 menuText.setDepth(15);
@@ -893,35 +894,39 @@
             };
             
             Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
-                const shelf = this.add.graphics();
-                shelf.fillStyle(0x8B4513);
-                shelf.fillRect(x, y, width, height);
-                shelf.fillStyle(0xA0522D);
-                shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
-                
-                const shelfCount = 6;
-                for (let i = 1; i < shelfCount; i++) {
-                    const shelfY = y + (height / shelfCount) * i;
+                try {
+                    const shelf = this.add.graphics();
                     shelf.fillStyle(0x8B4513);
-                    shelf.fillRect(x, shelfY - 3, width, 6);
-                }
-                shelf.setDepth(5);
-                
-                for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
-                    const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
-                    const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
-                    const bookHeight = shelfBottom - shelfTop - 5;
+                    shelf.fillRect(x, y, width, height);
+                    shelf.fillStyle(0xA0522D);
+                    shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
                     
-                    let bookX = x + 10;
-                    while (bookX < x + width - 20) {
-                        const bookWidth = 8 + Math.random() * 12;
-                        const bookColor = this.getRandomBookColor();
-                        
-                        this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, bookWidth, bookHeight, bookColor);
-                        this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, 1, bookHeight, 0x000000);
-                        
-                        bookX += bookWidth + 2;
+                    const shelfCount = 6;
+                    for (let i = 1; i < shelfCount; i++) {
+                        const shelfY = y + (height / shelfCount) * i;
+                        shelf.fillStyle(0x8B4513);
+                        shelf.fillRect(x, shelfY - 3, width, 6);
                     }
+                    shelf.setDepth(5);
+                    
+                    for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
+                        const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
+                        const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
+                        const bookHeight = shelfBottom - shelfTop - 5;
+                        
+                        let bookX = x + 10;
+                        while (bookX < x + width - 20) {
+                            const bookWidth = 8 + Math.random() * 12;
+                            const bookColor = this.getRandomBookColor();
+                            
+                            this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, bookWidth, bookHeight, bookColor);
+                            this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, 1, bookHeight, 0x000000);
+                            
+                            bookX += bookWidth + 2;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Book shelf creation error:', error);
                 }
             };
             
@@ -931,12 +936,16 @@
             };
             
             Phaser.Scene.prototype.createBook = function(x, y) {
-                const book = this.add.graphics();
-                book.fillStyle(this.getRandomBookColor());
-                book.fillRoundedRect(x, y, 25, 35, 3);
-                book.fillStyle(0x000000);
-                book.fillRect(x + 2, y + 2, 21, 2);
-                book.setDepth(-10);
+                try {
+                    const book = this.add.graphics();
+                    book.fillStyle(this.getRandomBookColor());
+                    book.fillRoundedRect(x, y, 25, 35, 3);
+                    book.fillStyle(0x000000);
+                    book.fillRect(x + 2, y + 2, 21, 2);
+                    book.setDepth(-10);
+                } catch (error) {
+                    console.warn('Book creation error:', error);
+                }
             };
 
             function setupFirebaseConnection() {
@@ -1000,8 +1009,19 @@
                 onValue(messagesRef, (snapshot) => {
                     const messages = snapshot.val();
                     if (messages) {
-                        const messageArray = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
-                        displayMessages(messageArray);
+                        // 今日の日付を取得
+                        const today = new Date();
+                        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+                        
+                        // 今日のメッセージのみフィルタリング
+                        const todayMessages = Object.values(messages)
+                            .filter(message => message.timestamp >= todayStart)
+                            .sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        displayMessages(todayMessages);
+                    } else {
+                        // メッセージがない場合は初期表示
+                        displayMessages([]);
                     }
                 });
                 
@@ -1075,9 +1095,15 @@
             if (chatInput) {
                 chatInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter' && chatInput.value.trim()) {
-                        sendMessage(chatInput.value.trim());
+                        const message = chatInput.value.trim();
+                        sendMessage(message);
                         chatInput.value = '';
                     }
+                });
+                
+                // フォーカス時の処理
+                chatInput.addEventListener('focus', () => {
+                    console.log('💬 Chat input focused');
                 });
             }
             
@@ -1089,21 +1115,34 @@
                     }
                 });
             }
+            
+            // 初期メッセージ表示
+            displayMessages([]);
         }
         
         function sendMessage(text) {
+            if (!text || !text.trim()) return;
+            
             const messagesRef = ref(database, 'messages');
             const messageRef = push(messagesRef);
             
-            set(messageRef, {
+            const messageData = {
                 playerId: state.playerId,
                 userName: state.userName,
-                text: text,
+                text: text.trim(),
                 timestamp: Date.now(),
                 mugColor: state.selectedMugColor
-            });
+            };
             
-            showSpeechBubble(text);
+            console.log('📤 Sending message:', messageData);
+            
+            set(messageRef, messageData).then(() => {
+                console.log('✅ Message sent successfully');
+                showSpeechBubble(text);
+            }).catch((error) => {
+                console.error('❌ Message send failed:', error);
+                alert('メッセージの送信に失敗しました。再試行してください。');
+            });
         }
         
         function sendReaction(emoji) {
@@ -1220,27 +1259,39 @@
         
         function displayMessages(messages) {
             const chatMessages = elements.chatMessages;
+            if (!chatMessages) return;
+            
+            // 初期メッセージを設定
             chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div></div>';
             
-            messages.slice(-20).forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                
-                const author = document.createElement('div');
-                author.className = 'message-author';
-                author.textContent = `🦔 ${message.userName || 'ゲスト'}`;
-                author.style.color = message.mugColor || '#8B4513';
-                
-                const text = document.createElement('div');
-                text.className = 'message-text';
-                text.textContent = message.text;
-                
-                messageDiv.appendChild(author);
-                messageDiv.appendChild(text);
-                chatMessages.appendChild(messageDiv);
-            });
+            // 今日のメッセージのみ表示（最新20件）
+            if (messages && messages.length > 0) {
+                messages.slice(-20).forEach(message => {
+                    // メッセージの妥当性チェック
+                    if (!message.text || !message.userName) return;
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message';
+                    
+                    const author = document.createElement('div');
+                    author.className = 'message-author';
+                    author.textContent = `🦔 ${message.userName}`;
+                    author.style.color = message.mugColor || '#8B4513';
+                    
+                    const text = document.createElement('div');
+                    text.className = 'message-text';
+                    text.textContent = message.text;
+                    
+                    messageDiv.appendChild(author);
+                    messageDiv.appendChild(text);
+                    chatMessages.appendChild(messageDiv);
+                });
+            }
             
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            // 自動スクロール
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
         }
 
         // イベントリスナー設定
