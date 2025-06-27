@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カフェ バーチャルオフィス</title>
+    <title>ブックカフェ バーチャルオフィス</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
         
@@ -71,11 +71,38 @@
             font-size: 14px;
             outline: none;
             font-family: inherit;
+            margin-bottom: 10px;
         }
         
         .chat-input:focus {
             border-color: #D2691E;
             box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .reaction-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .reaction-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #8B4513;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+        
+        .reaction-btn:hover {
+            transform: scale(1.1);
+            background: rgba(139, 69, 19, 0.1);
         }
         
         .message {
@@ -110,6 +137,9 @@
             z-index: 3000;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .character-select h2 {
@@ -120,9 +150,19 @@
             font-weight: 700;
         }
         
+        .name-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #8B4513;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-family: inherit;
+        }
+        
         .character-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -173,6 +213,12 @@
             box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
         }
         
+        .start-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .loading {
             position: absolute;
             top: 50%;
@@ -219,6 +265,8 @@
             z-index: 500;
             backdrop-filter: blur(5px);
             animation: bubbleFloat 0.5s ease-out;
+            max-width: 200px;
+            word-wrap: break-word;
         }
         
         .speech-bubble::after {
@@ -232,6 +280,14 @@
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
             border-top: 10px solid #8B4513;
+        }
+        
+        .reaction-animation {
+            position: absolute;
+            font-size: 24px;
+            z-index: 600;
+            animation: reactionFloat 3s ease-out forwards;
+            pointer-events: none;
         }
         
         @keyframes bubbleFloat {
@@ -255,23 +311,40 @@
                 transform: translateY(-20px) scale(0.8);
             }
         }
+        
+        @keyframes reactionFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-30px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(0.8);
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">カフェを準備中...</div>
+    <div class="loading" id="loading">ブックカフェを準備中...</div>
     
     <div class="character-select" id="character-select">
-        <h2>マグカップを選んでください</h2>
+        <h2>☕ ブックカフェへようこそ</h2>
+        <input type="text" id="name-input" class="name-input" placeholder="お名前を入力してください" maxlength="20">
+        <h3 style="color: #8B4513; margin-bottom: 15px; text-align: center;">マグカップを選んでください</h3>
         <div class="character-grid" id="character-grid">
             <!-- マグカップ選択肢をここに動的生成 -->
         </div>
-        <button class="start-button" onclick="startGame()">カフェに入る</button>
+        <button class="start-button" id="start-btn" onclick="startGame()" disabled>カフェに入る</button>
     </div>
     
     <div class="main-container" id="main-container" style="display: none;">
         <div class="game-area" id="game-area">
             <div class="ui-overlay" id="ui-overlay">
-                <div class="title">☕ Virtual Cafe</div>
+                <div class="title">📚 Book Cafe</div>
                 <div class="subtitle">オンライン: <span id="user-count">1</span>人</div>
             </div>
         </div>
@@ -283,11 +356,21 @@
             <div class="chat-messages" id="chat-messages">
                 <div class="message">
                     <div class="message-author">システム</div>
-                    <div class="message-text">カフェへようこそ！メッセージを入力してみてください。</div>
+                    <div class="message-text">ブックカフェへようこそ！メッセージやリアクションで交流しましょう。</div>
                 </div>
             </div>
             <div class="chat-input-area">
                 <input type="text" id="chat-input" class="chat-input" placeholder="メッセージを入力..." maxlength="100">
+                <div class="reaction-buttons">
+                    <button class="reaction-btn" onclick="sendReaction('❤️')" title="ハート">❤️</button>
+                    <button class="reaction-btn" onclick="sendReaction('⭐')" title="星">⭐</button>
+                    <button class="reaction-btn" onclick="sendReaction('😊')" title="笑顔">😊</button>
+                    <button class="reaction-btn" onclick="sendReaction('👍')" title="いいね">👍</button>
+                    <button class="reaction-btn" onclick="sendReaction('🍰')" title="ケーキ">🍰</button>
+                    <button class="reaction-btn" onclick="sendReaction('☕')" title="コーヒー">☕</button>
+                    <button class="reaction-btn" onclick="sendReaction('💭')" title="もやもや">💭</button>
+                    <button class="reaction-btn" onclick="sendReaction('📚')" title="本">📚</button>
+                </div>
             </div>
         </div>
     </div>
@@ -312,13 +395,15 @@
         const database = getDatabase(app);
         
         let selectedMugColor = '#D2691E';
+        let userName = '';
         let gameInstance = null;
         let playerId = null;
         let deviceId = null;
         let gameScene = null;
         let speechBubbles = [];
+        let reactionAnimations = [];
         
-        // デバイスIDを生成
+        // デバイスIDを生成（同じデバイスからの重複参加防止）
         function generateDeviceId() {
             let id = localStorage.getItem('device-id');
             if (!id) {
@@ -328,7 +413,30 @@
             return id;
         }
         
-        // マグカップ選択肢を生成
+        // 既存セッションチェック
+        function checkExistingSession() {
+            const existingPlayerId = localStorage.getItem('player-id');
+            const existingName = localStorage.getItem('user-name');
+            const existingMugColor = localStorage.getItem('mug-color');
+            
+            if (existingPlayerId && existingName && existingMugColor) {
+                // 既存セッションがある場合は自動的にゲームを開始
+                playerId = existingPlayerId;
+                userName = existingName;
+                selectedMugColor = existingMugColor;
+                
+                document.getElementById('character-select').style.display = 'none';
+                document.getElementById('main-container').style.display = 'flex';
+                document.getElementById('loading').style.display = 'none';
+                
+                initializeGame();
+                setupChat();
+                return true;
+            }
+            return false;
+        }
+        
+        // マグカップ選択肢を生成（12色）
         function generateMugOptions() {
             const mugColors = [
                 { color: '#D2691E', name: 'キャラメル' },
@@ -336,7 +444,13 @@
                 { color: '#F4A460', name: 'ラテ' },
                 { color: '#CD853F', name: 'モカ' },
                 { color: '#DEB887', name: 'カプチーノ' },
-                { color: '#BC8F8F', name: 'ココア' }
+                { color: '#BC8F8F', name: 'ココア' },
+                { color: '#A0522D', name: 'チャイ' },
+                { color: '#DAA520', name: 'ハニー' },
+                { color: '#B22222', name: 'ベリー' },
+                { color: '#2E8B57', name: 'マッチャ' },
+                { color: '#4682B4', name: 'ブルー' },
+                { color: '#9370DB', name: 'ラベンダー' }
             ];
             
             const grid = document.getElementById('character-grid');
@@ -381,11 +495,36 @@
             selectedMugColor = color;
             document.querySelectorAll('.character-option').forEach(opt => opt.classList.remove('selected'));
             element.classList.add('selected');
+            checkCanStart();
+        }
+        
+        function checkCanStart() {
+            const nameInput = document.getElementById('name-input');
+            const startBtn = document.getElementById('start-btn');
+            
+            if (nameInput.value.trim() && selectedMugColor) {
+                startBtn.disabled = false;
+            } else {
+                startBtn.disabled = true;
+            }
         }
         
         function startGame() {
+            const nameInput = document.getElementById('name-input');
+            userName = nameInput.value.trim();
+            
+            if (!userName) {
+                alert('お名前を入力してください');
+                return;
+            }
+            
             deviceId = generateDeviceId();
             playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+            
+            // セッション情報を保存
+            localStorage.setItem('player-id', playerId);
+            localStorage.setItem('user-name', userName);
+            localStorage.setItem('mug-color', selectedMugColor);
             
             document.getElementById('character-select').style.display = 'none';
             document.getElementById('main-container').style.display = 'flex';
@@ -396,6 +535,7 @@
         }
         
         window.startGame = startGame;
+        window.sendReaction = sendReaction;
         
         function initializeGame() {
             const gameArea = document.getElementById('game-area');
@@ -436,68 +576,69 @@
             
             function createCafeAssets() {
                 // カフェテーブル（長方形）
-                this.add.graphics()
-                    .fillStyle(0x8B4513) // ダークブラウン
-                    .fillRoundedRect(0, 0, 800, 120, 15)
-                    .fillStyle(0xA0522D) // テーブル表面
-                    .fillRoundedRect(10, 10, 780, 100, 10)
-                    .fillStyle(0x654321) // 木目模様
-                    .fillRect(20, 20, 760, 4)
-                    .fillRect(20, 30, 760, 4)
-                    .fillRect(20, 40, 760, 4)
-                    .fillRect(20, 50, 760, 4)
-                    .fillRect(20, 60, 760, 4)
-                    .fillRect(20, 70, 760, 4)
-                    .fillRect(20, 80, 760, 4)
-                    .fillRect(20, 90, 760, 4)
-                    .generateTexture('cafe-table', 800, 120);
+                const tableGraphics = this.add.graphics();
+                tableGraphics.fillStyle(0x8B4513);
+                tableGraphics.fillRoundedRect(0, 0, 800, 120, 15);
+                tableGraphics.fillStyle(0xA0522D);
+                tableGraphics.fillRoundedRect(10, 10, 780, 100, 10);
+                tableGraphics.fillStyle(0x654321);
+                for (let i = 0; i < 8; i++) {
+                    tableGraphics.fillRect(20, 20 + i * 10, 760, 4);
+                }
+                tableGraphics.generateTexture('cafe-table', 800, 120);
+                tableGraphics.destroy();
 
-                // マグカップアセット生成
-                this.createMugAsset(selectedMugColor, 'player-mug');
-                
-                // 他プレイヤー用のマグカップも事前生成
-                const colors = ['#D2691E', '#8B4513', '#F4A460', '#CD853F', '#DEB887', '#BC8F8F'];
+                // 12色のマグカップを生成
+                const colors = ['#D2691E', '#8B4513', '#F4A460', '#CD853F', '#DEB887', '#BC8F8F', 
+                              '#A0522D', '#DAA520', '#B22222', '#2E8B57', '#4682B4', '#9370DB'];
                 colors.forEach((color, index) => {
-                    this.createMugAsset(color, `mug-${index}`);
+                    this.createMugTexture(color, `mug-${index}`);
                 });
+                
+                // プレイヤー用マグカップ
+                const playerMugIndex = colors.indexOf(selectedMugColor);
+                this.createMugTexture(selectedMugColor, 'player-mug');
             }
             
-            Phaser.Scene.prototype.createMugAsset = function(color, key) {
-                const graphics = this.add.graphics();
+            Phaser.Scene.prototype.createMugTexture = function(color, key) {
+                // テクスチャ生成時に画面に表示されないよう、非表示位置で生成
+                const tempGraphics = this.add.graphics({ x: -1000, y: -1000 });
+                
+                const colorInt = parseInt(color.replace('#', '0x'));
                 
                 // マグカップ本体
-                graphics.fillStyle(parseInt(color.replace('#', '0x')));
-                graphics.fillRoundedRect(0, 20, 40, 50, 20);
+                tempGraphics.fillStyle(colorInt);
+                tempGraphics.fillRoundedRect(0, 20, 40, 50, 20);
                 
                 // ハンドル
-                graphics.lineStyle(4, 0x8B4513);
-                graphics.strokeCircle(45, 35, 12);
+                tempGraphics.lineStyle(4, 0x8B4513);
+                tempGraphics.strokeCircle(45, 35, 12);
                 
                 // カップの縁
-                graphics.fillStyle(0x8B4513);
-                graphics.fillEllipse(20, 25, 40, 10);
+                tempGraphics.fillStyle(0x8B4513);
+                tempGraphics.fillEllipse(20, 25, 40, 10);
                 
                 // コーヒー表面
-                graphics.fillStyle(0x3E2723);
-                graphics.fillEllipse(20, 25, 35, 8);
+                tempGraphics.fillStyle(0x3E2723);
+                tempGraphics.fillEllipse(20, 25, 35, 8);
                 
                 // 湯気エフェクト
-                graphics.fillStyle(0xFFFFFF);
-                graphics.fillCircle(15, 15, 2);
-                graphics.fillCircle(20, 10, 2);
-                graphics.fillCircle(25, 15, 2);
-                graphics.fillCircle(30, 8, 2);
+                tempGraphics.fillStyle(0xFFFFFF);
+                tempGraphics.fillCircle(15, 15, 2);
+                tempGraphics.fillCircle(20, 10, 2);
+                tempGraphics.fillCircle(25, 15, 2);
+                tempGraphics.fillCircle(30, 8, 2);
                 
-                graphics.generateTexture(key, 60, 80);
-                graphics.destroy();
+                tempGraphics.generateTexture(key, 60, 80);
+                tempGraphics.destroy();
             };
 
             function create() {
                 const gameWidth = this.cameras.main.width;
                 const gameHeight = this.cameras.main.height;
                 
-                // カフェ背景を作成
-                this.createCafeBackground(gameWidth, gameHeight);
+                // ブックカフェ背景を作成
+                this.createBookCafeBackground(gameWidth, gameHeight);
                 
                 // テーブル配置（画面下部）
                 const tableY = gameHeight - 120;
@@ -505,9 +646,9 @@
                 table.setDisplaySize(gameWidth - 40, 120);
                 table.setDepth(1);
                 
-                // プレイヤー作成（テーブル上に配置）
+                // プレイヤー作成（テーブルの上に配置）
                 const startX = 100;
-                const playerY = tableY - 40; // テーブルの上
+                const playerY = tableY - 40;
                 
                 player = this.add.sprite(startX, playerY, 'player-mug');
                 player.setScale(1.0);
@@ -523,259 +664,134 @@
                 setupFirebaseConnection();
             }
 
-            Phaser.Scene.prototype.createCafeBackground = function(width, height) {
+            Phaser.Scene.prototype.createBookCafeBackground = function(width, height) {
                 // カフェの背景（グラデーション）
                 const bg = this.add.graphics();
                 bg.fillGradientStyle(0xF5DEB3, 0xF5DEB3, 0xDEB887, 0xDEB887, 1);
                 bg.fillRect(0, 0, width, height);
                 bg.setDepth(-100);
                 
-                // カフェの装飾
-                // コーヒー豆の装飾
-                for (let i = 0; i < 20; i++) {
-                    const x = Math.random() * width;
-                    const y = Math.random() * (height - 200);
-                    const bean = this.add.ellipse(x, y, 8, 12, 0x3E2723, 0.3);
-                    bean.setDepth(-50);
-                }
+                // 本棚を左右に配置
+                this.createBookshelf(50, 50, 120, height - 200);
+                this.createBookshelf(width - 170, 50, 120, height - 200);
                 
-                // カフェメニューボード（装飾）
-                const menu = this.add.rectangle(width - 150, 100, 120, 150, 0x8B4513);
-                menu.setDepth(-10);
+                // 大きめのカフェメニューボード
+                const menuX = width - 250;
+                const menuY = 120;
+                const menuWidth = 180;
+                const menuHeight = 200;
                 
-                const menuText = this.add.text(width - 150, 100, 'MENU\n\n☕ Coffee\n🥐 Croissant\n🍰 Cake', {
+                // メニューボード背景
+                const menuBoard = this.add.graphics();
+                menuBoard.fillStyle(0x4A4A4A);
+                menuBoard.fillRoundedRect(menuX - menuWidth/2, menuY - menuHeight/2, menuWidth, menuHeight, 10);
+                menuBoard.fillStyle(0x2A2A2A);
+                menuBoard.fillRoundedRect(menuX - menuWidth/2 + 10, menuY - menuHeight/2 + 10, menuWidth - 20, menuHeight - 20, 5);
+                menuBoard.setDepth(10);
+                
+                // メニューテキスト
+                const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🍵 抹茶ラテ ¥480', {
+                    fontSize: '14px',
+                    fill: '#FFFFFF',
+                    align: 'center',
+                    fontFamily: 'Noto Sans JP',
+                    lineSpacing: 5
+                });
+                menuText.setOrigin(0.5);
+                menuText.setDepth(15);
+                
+                // 日付ポスター
+                const today = new Date();
+                const dateStr = today.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                
+                const dateX = 150;
+                const dateY = 80;
+                const datePoster = this.add.graphics();
+                datePoster.fillStyle(0xFFFFFF);
+                datePoster.fillRoundedRect(dateX - 80, dateY - 40, 160, 80, 10);
+                datePoster.fillStyle(0x8B4513);
+                datePoster.fillRoundedRect(dateX - 75, dateY - 35, 150, 70, 5);
+                datePoster.setDepth(10);
+                
+                const dateText = this.add.text(dateX, dateY, `📅 ${dateStr}`, {
                     fontSize: '12px',
                     fill: '#FFFFFF',
                     align: 'center',
-                    fontFamily: 'Arial'
+                    fontFamily: 'Noto Sans JP',
+                    wordWrap: { width: 140 }
                 });
-                menuText.setOrigin(0.5);
-                menuText.setDepth(-5);
+                dateText.setOrigin(0.5);
+                dateText.setDepth(15);
+                
+                // アンビエント装飾
+                // 床にちらばった本や雑誌
+                for (let i = 0; i < 5; i++) {
+                    const x = 200 + Math.random() * (width - 400);
+                    const y = height - 180 + Math.random() * 50;
+                    this.createBook(x, y);
+                }
+                
+                // 天井の照明
+                for (let i = 0; i < 3; i++) {
+                    const x = 200 + i * (width - 400) / 2;
+                    const light = this.add.ellipse(x, 30, 60, 20, 0xFFFACD, 0.6);
+                    light.setDepth(-50);
+                }
             };
-
-            function setupFirebaseConnection() {
-                const userRef = ref(database, `users/${deviceId}`);
-                const playersRef = ref(database, 'players');
-                const messagesRef = ref(database, 'messages');
+            
+            Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
+                // 本棚の枠
+                const shelf = this.add.graphics();
+                shelf.fillStyle(0x8B4513);
+                shelf.fillRect(x, y, width, height);
+                shelf.fillStyle(0xA0522D);
+                shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
                 
-                // ユーザー登録
-                set(userRef, {
-                    playerId: playerId,
-                    deviceId: deviceId,
-                    timestamp: Date.now()
-                });
+                // 本棚の棚板
+                const shelfCount = 6;
+                for (let i = 1; i < shelfCount; i++) {
+                    const shelfY = y + (height / shelfCount) * i;
+                    shelf.fillStyle(0x8B4513);
+                    shelf.fillRect(x, shelfY - 3, width, 6);
+                }
+                shelf.setDepth(5);
                 
-                // プレイヤー位置登録
-                const playerRef = ref(database, `players/${playerId}`);
-                set(playerRef, {
-                    x: player.x,
-                    y: player.y,
-                    mugColor: selectedMugColor,
-                    deviceId: deviceId,
-                    timestamp: Date.now()
-                });
-                
-                // 切断時のクリーンアップ
-                onDisconnect(playerRef).remove();
-                onDisconnect(userRef).remove();
-                
-                // 他プレイヤーの監視
-                onValue(playersRef, (snapshot) => {
-                    const players = snapshot.val();
+                // 本を配置
+                for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
+                    const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
+                    const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
+                    const bookHeight = shelfBottom - shelfTop - 5;
                     
-                    // ユニークデバイス数をカウント
-                    const uniqueDevices = new Set();
-                    if (players) {
-                        Object.values(players).forEach(player => {
-                            if (player.deviceId) {
-                                uniqueDevices.add(player.deviceId);
-                            }
-                        });
-                    }
-                    
-                    document.getElementById('user-count').textContent = uniqueDevices.size;
-                    
-                    // 他プレイヤーの更新
-                    if (players) {
-                        Object.keys(players).forEach(id => {
-                            if (id !== playerId) {
-                                updateOtherPlayer.call(gameScene, id, players[id]);
-                            }
-                        });
+                    let bookX = x + 10;
+                    while (bookX < x + width - 20) {
+                        const bookWidth = 8 + Math.random() * 12;
+                        const bookColor = this.getRandomBookColor();
                         
-                        // 存在しないプレイヤーの削除
-                        Object.keys(otherPlayers).forEach(id => {
-                            if (!players[id]) {
-                                if (otherPlayers[id]) {
-                                    otherPlayers[id].destroy();
-                                    delete otherPlayers[id];
-                                }
-                            }
-                        });
+                        this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, bookWidth, bookHeight, bookColor);
+                        
+                        // 本の背表紙の線
+                        this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, 1, bookHeight, 0x000000);
+                        
+                        bookX += bookWidth + 2;
                     }
-                });
-                
-                // メッセージの監視
-                onValue(messagesRef, (snapshot) => {
-                    const messages = snapshot.val();
-                    if (messages) {
-                        const messageArray = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
-                        displayMessages(messageArray);
-                    }
-                });
-            }
-
-            function updateOtherPlayer(id, data) {
-                if (!otherPlayers[id]) {
-                    // 新しいプレイヤーの作成
-                    const mugColorIndex = ['#D2691E', '#8B4513', '#F4A460', '#CD853F', '#DEB887', '#BC8F8F']
-                        .indexOf(data.mugColor) || 0;
-                    
-                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
-                    otherPlayers[id].setScale(1.0);
-                    otherPlayers[id].setAlpha(0.9);
-                    otherPlayers[id].setDepth(200);
-                } else {
-                    // 位置更新
-                    otherPlayers[id].x = data.x;
-                    otherPlayers[id].y = data.y;
                 }
-            }
-
-            function update() {
-                const speed = 3;
-                let moved = false;
-                const gameWidth = this.cameras.main.width;
-                
-                // 左右移動のみ
-                if (cursors.left.isDown && player.x > 50) {
-                    player.x -= speed;
-                    moved = true;
-                }
-                if (cursors.right.isDown && player.x < gameWidth - 50) {
-                    player.x += speed;
-                    moved = true;
-                }
-                
-                if (moved) {
-                    const playerRef = ref(database, `players/${playerId}`);
-                    set(playerRef, {
-                        x: player.x,
-                        y: player.y,
-                        mugColor: selectedMugColor,
-                        deviceId: deviceId,
-                        timestamp: Date.now()
-                    });
-                }
-            }
-
-            function resize(gameSize) {
-                const width = gameSize.width;
-                const height = gameSize.height;
-                this.cameras.resize(width, height);
-            }
-
-            gameInstance = new Phaser.Game(config);
-        }
-        
-        function setupChat() {
-            const chatInput = document.getElementById('chat-input');
+            };
             
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && chatInput.value.trim()) {
-                    sendMessage(chatInput.value.trim());
-                    chatInput.value = '';
-                }
-            });
-        }
-        
-        function sendMessage(text) {
-            const messagesRef = ref(database, 'messages');
-            const messageRef = push(messagesRef);
+            Phaser.Scene.prototype.getRandomBookColor = function() {
+                const colors = [0x8B0000, 0x006400, 0x4B0082, 0x8B4513, 0x2F4F4F, 0x800080, 0x008080, 0xB8860B];
+                return colors[Math.floor(Math.random() * colors.length)];
+            };
             
-            set(messageRef, {
-                playerId: playerId,
-                text: text,
-                timestamp: Date.now(),
-                mugColor: selectedMugColor
-            });
-            
-            // 吹き出し表示
-            showSpeechBubble(text);
-        }
-        
-        function showSpeechBubble(text) {
-            if (!gameScene || !gameScene.sys.game.scene.scenes[0]) return;
-            
-            const gameArea = document.getElementById('game-area');
-            const bubble = document.createElement('div');
-            bubble.className = 'speech-bubble';
-            bubble.textContent = text;
-            
-            // プレイヤー位置に合わせて配置
-            const player = gameScene.sys.game.scene.scenes[0].children.list.find(obj => obj.playerId === playerId);
-            if (player) {
-                const x = player.x - 50;
-                const y = player.y - 80;
-                
-                bubble.style.left = x + 'px';
-                bubble.style.top = y + 'px';
-            }
-            
-            gameArea.appendChild(bubble);
-            speechBubbles.push(bubble);
-            
-            // 3秒後に削除
-            setTimeout(() => {
-                bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
-                setTimeout(() => {
-                    if (bubble.parentNode) {
-                        bubble.parentNode.removeChild(bubble);
-                    }
-                    const index = speechBubbles.indexOf(bubble);
-                    if (index > -1) {
-                        speechBubbles.splice(index, 1);
-                    }
-                }, 500);
-            }, 3000);
-        }
-        
-        function displayMessages(messages) {
-            const chatMessages = document.getElementById('chat-messages');
-            chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">カフェへようこそ！メッセージを入力してみてください。</div></div>';
-            
-            messages.slice(-20).forEach(message => { // 最新20件のみ表示
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                
-                const author = document.createElement('div');
-                author.className = 'message-author';
-                author.textContent = `☕ ゲスト`;
-                author.style.color = message.mugColor || '#8B4513';
-                
-                const text = document.createElement('div');
-                text.className = 'message-text';
-                text.textContent = message.text;
-                
-                messageDiv.appendChild(author);
-                messageDiv.appendChild(text);
-                chatMessages.appendChild(messageDiv);
-            });
-            
-            // 自動スクロール
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        // ウィンドウリサイズ対応
-        window.addEventListener('resize', () => {
-            if (gameInstance) {
-                const gameArea = document.getElementById('game-area');
-                gameInstance.scale.resize(gameArea.clientWidth, gameArea.clientHeight);
-            }
-        });
-
-        // 初期化
-        generateMugOptions();
-    </script>
-</body>
-</html>
+            Phaser.Scene.prototype.createBook = function(x, y) {
+                const book = this.add.graphics();
+                book.fillStyle(this.getRandomBookColor());
+                book.fillRoundedRect(x, y, 25, 35, 3);
+                book.fillStyle(0x000000);
+                book.fillRect(x + 2, y + 2, 21, 2);
+                book.setDepth(-10);
+            };
