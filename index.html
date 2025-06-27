@@ -125,7 +125,7 @@
             font-size: 14px;
         }
         
-        .character-select {
+        .screen {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -133,43 +133,48 @@
             background: rgba(255, 255, 255, 0.95);
             border: 3px solid #8B4513;
             border-radius: 15px;
-            padding: 30px;
+            padding: 40px;
             z-index: 3000;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
+            text-align: center;
         }
         
-        .character-select h2 {
+        .screen h2 {
             color: #8B4513;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
+            font-size: 28px;
+            margin-bottom: 30px;
             font-weight: 700;
         }
         
         .name-input {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             border: 2px solid #8B4513;
             border-radius: 10px;
-            font-size: 16px;
-            margin-bottom: 20px;
+            font-size: 18px;
+            margin-bottom: 30px;
             font-family: inherit;
+            text-align: center;
+        }
+        
+        .name-input:focus {
+            border-color: #D2691E;
+            outline: none;
+            box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
         }
         
         .character-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 40px;
         }
         
         .character-option {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             border: 3px solid #DDD;
             border-radius: 15px;
             background: #FFF;
@@ -193,29 +198,31 @@
             box-shadow: 0 5px 20px rgba(139, 69, 19, 0.4);
         }
         
-        .start-button {
+        .big-button {
             width: 100%;
-            padding: 15px;
-            background: #ccc;
+            padding: 20px;
+            background: #8B4513;
             border: none;
             border-radius: 25px;
             color: white;
             font-family: inherit;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
-            cursor: not-allowed;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
         
-        .start-button.enabled {
-            background: #8B4513;
-            cursor: pointer;
-        }
-        
-        .start-button.enabled:hover {
+        .big-button:hover {
             background: #A0522D;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+        
+        .big-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .loading {
@@ -330,14 +337,21 @@
 <body>
     <div class="loading" id="loading">ハリネズミカフェを準備中...</div>
     
-    <div class="character-select" id="character-select">
+    <!-- 名前入力画面 -->
+    <div class="screen" id="name-screen">
         <h2>🦔 ハリネズミカフェへようこそ</h2>
         <input type="text" id="name-input" class="name-input" placeholder="お名前を入力してください" maxlength="20">
-        <h3 style="color: #8B4513; margin-bottom: 15px; text-align: center;">マグカップを選んでください</h3>
-        <div class="character-grid" id="character-grid"></div>
-        <button class="start-button" id="start-btn">カフェに入る</button>
+        <button class="big-button" id="name-next-btn" onclick="goToMugSelection()">次へ</button>
     </div>
     
+    <!-- マグカップ選択画面 -->
+    <div class="screen" id="mug-screen" style="display: none;">
+        <h2>☕ マグカップを選んでください</h2>
+        <div class="character-grid" id="character-grid"></div>
+        <button class="big-button" id="start-btn" onclick="startGame()" disabled>カフェに入る</button>
+    </div>
+    
+    <!-- メインゲーム画面 -->
     <div class="main-container" id="main-container" style="display: none;">
         <div class="game-area" id="game-area">
             <div class="ui-overlay" id="ui-overlay">
@@ -409,8 +423,6 @@
             { color: '#9370DB', name: 'ラベンダー' }
         ];
         
-        const REACTIONS = ['❤️', '⭐', '😊', '👍', '🍰', '☕', '💭', '📚'];
-        
         let state = {
             selectedMugColor: '',
             userName: '',
@@ -420,15 +432,18 @@
             gameScene: null,
             speechBubbles: [],
             reactionAnimations: [],
-            isInitialized: false
+            isInitialized: false,
+            currentStep: 'name' // 'name', 'mug', 'game'
         };
 
         // DOM要素取得
         const elements = {
             get loading() { return document.getElementById('loading'); },
-            get characterSelect() { return document.getElementById('character-select'); },
+            get nameScreen() { return document.getElementById('name-screen'); },
+            get mugScreen() { return document.getElementById('mug-screen'); },
             get mainContainer() { return document.getElementById('main-container'); },
             get nameInput() { return document.getElementById('name-input'); },
+            get nameNextBtn() { return document.getElementById('name-next-btn'); },
             get characterGrid() { return document.getElementById('character-grid'); },
             get startBtn() { return document.getElementById('start-btn'); },
             get gameArea() { return document.getElementById('game-area'); },
@@ -489,8 +504,8 @@
             createMugHTML(color) {
                 return `
                     <div style="
-                        width: 40px;
-                        height: 40px;
+                        width: 50px;
+                        height: 50px;
                         background: ${color};
                         border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
                         border: 3px solid #8B4513;
@@ -499,10 +514,10 @@
                     ">
                         <div style="
                             position: absolute;
-                            right: -8px;
-                            top: 8px;
-                            width: 12px;
-                            height: 20px;
+                            right: -10px;
+                            top: 10px;
+                            width: 15px;
+                            height: 25px;
                             border: 3px solid #8B4513;
                             border-left: none;
                             border-radius: 0 50% 50% 0;
@@ -532,12 +547,61 @@
             return true;
         }
 
+        // 画面制御
+        function showNameScreen() {
+            console.log('📝 Showing name input screen');
+            elements.loading.style.display = 'none';
+            elements.nameScreen.style.display = 'block';
+            elements.mugScreen.style.display = 'none';
+            elements.mainContainer.style.display = 'none';
+            
+            // 名前入力にフォーカス
+            setTimeout(() => {
+                elements.nameInput.focus();
+            }, 100);
+        }
+
+        function showMugScreen() {
+            console.log('☕ Showing mug selection screen');
+            elements.nameScreen.style.display = 'none';
+            elements.mugScreen.style.display = 'block';
+            elements.mainContainer.style.display = 'none';
+            
+            // マグカップ選択肢を生成
+            generateMugOptions();
+        }
+
+        function showGameScreen() {
+            console.log('🎮 Showing game screen');
+            elements.nameScreen.style.display = 'none';
+            elements.mugScreen.style.display = 'none';
+            elements.mainContainer.style.display = 'flex';
+            
+            initializeGame();
+            setupChat();
+        }
+
+        // 名前入力からマグカップ選択へ
+        function goToMugSelection() {
+            const nameInput = elements.nameInput;
+            state.userName = nameInput.value.trim();
+            
+            if (!state.userName) {
+                alert('❌ お名前を入力してください');
+                nameInput.focus();
+                return;
+            }
+            
+            console.log(`👤 Name entered: ${state.userName}`);
+            state.currentStep = 'mug';
+            showMugScreen();
+        }
+
         // マグカップ選択肢生成
         function generateMugOptions() {
             const grid = elements.characterGrid;
             if (!grid) {
-                console.error('character-grid not found, retrying...');
-                setTimeout(generateMugOptions, 100);
+                console.error('character-grid not found');
                 return;
             }
 
@@ -548,12 +612,9 @@
                 const option = document.createElement('div');
                 option.className = 'character-option';
                 option.innerHTML = utils.createMugHTML(mug.color);
-                
-                // クリックイベントを直接追加
                 option.addEventListener('click', () => selectMug(mug.color, option));
-                
                 grid.appendChild(option);
-                console.log(`✅ Added mug option ${index + 1}: ${mug.name}`);
+                console.log(`✅ Added mug option ${index + 1}: ${mug.name} (${mug.color})`);
             });
 
             console.log(`🎯 Generated ${MUG_COLORS.length} mug options successfully`);
@@ -579,27 +640,29 @@
 
         // 開始ボタンの状態更新
         function updateStartButton() {
-            const nameInput = elements.nameInput;
             const startBtn = elements.startBtn;
+            if (!startBtn) return;
             
-            if (!nameInput || !startBtn) {
-                console.warn('Name input or start button not found');
-                return;
-            }
-            
-            const hasName = nameInput.value.trim().length > 0;
-            const hasMugSelection = state.selectedMugColor !== '';
-            
-            console.log(`🔍 Validation: name=${hasName}, mug=${hasMugSelection}, color=${state.selectedMugColor}`);
-            
-            if (hasName && hasMugSelection) {
+            if (state.selectedMugColor) {
                 startBtn.disabled = false;
-                startBtn.className = 'start-button enabled';
                 console.log('✅ Start button enabled');
             } else {
                 startBtn.disabled = true;
-                startBtn.className = 'start-button';
                 console.log('❌ Start button disabled');
+            }
+        }
+
+        // 名前入力ボタンの状態更新
+        function updateNameButton() {
+            const nameInput = elements.nameInput;
+            const nameNextBtn = elements.nameNextBtn;
+            
+            if (!nameInput || !nameNextBtn) return;
+            
+            if (nameInput.value.trim()) {
+                nameNextBtn.disabled = false;
+            } else {
+                nameNextBtn.disabled = true;
             }
         }
 
@@ -613,6 +676,7 @@
                 state.playerId = existingPlayerId;
                 state.userName = existingName;
                 state.selectedMugColor = existingMugColor;
+                state.currentStep = 'game';
                 
                 showGameScreen();
                 return true;
@@ -620,46 +684,8 @@
             return false;
         }
 
-        // 画面表示制御
-        function showCharacterSelect() {
-            console.log('🎭 Showing character select screen');
-            
-            if (elements.loading) elements.loading.style.display = 'none';
-            if (elements.characterSelect) {
-                elements.characterSelect.style.display = 'block';
-                console.log('✅ Character select screen visible');
-            }
-            if (elements.mainContainer) elements.mainContainer.style.display = 'none';
-            
-            // マグカップ生成を確実に実行
-            setTimeout(() => {
-                if (elements.characterGrid && elements.characterGrid.children.length === 0) {
-                    console.log('🔄 Regenerating mug options...');
-                    generateMugOptions();
-                }
-            }, 100);
-        }
-
-        function showGameScreen() {
-            elements.loading.style.display = 'none';
-            elements.characterSelect.style.display = 'none';
-            elements.mainContainer.style.display = 'flex';
-            
-            initializeGame();
-            setupChat();
-        }
-
         // ゲーム開始
         function startGame() {
-            const nameInput = elements.nameInput;
-            state.userName = nameInput.value.trim();
-            
-            if (!state.userName) {
-                alert('❌ お名前を入力してください');
-                nameInput.focus();
-                return;
-            }
-            
             if (!state.selectedMugColor) {
                 alert('❌ マグカップを選択してください');
                 return;
@@ -673,6 +699,8 @@
             localStorage.setItem('user-name', state.userName);
             localStorage.setItem('mug-color', state.selectedMugColor);
             
+            console.log(`🚀 Starting game with: ${state.userName}, ${state.selectedMugColor}`);
+            state.currentStep = 'game';
             showGameScreen();
         }
 
@@ -734,7 +762,6 @@
                 });
                 
                 // プレイヤー用マグカップ
-                const playerMugIndex = MUG_COLORS.findIndex(m => m.color === state.selectedMugColor);
                 this.createMugTexture(state.selectedMugColor, 'player-mug');
             }
             
@@ -801,3 +828,483 @@
                 this.createBookshelf(width - 170, 50, 120, height - 200);
                 
                 // メニューボード
+                const menuX = width - 250;
+                const menuY = 120;
+                const menuWidth = 180;
+                const menuHeight = 200;
+                
+                const menuBoard = this.add.graphics();
+                menuBoard.fillStyle(0x4A4A4A);
+                menuBoard.fillRoundedRect(menuX - menuWidth/2, menuY - menuHeight/2, menuWidth, menuHeight, 10);
+                menuBoard.fillStyle(0x2A2A2A);
+                menuBoard.fillRoundedRect(menuX - menuWidth/2 + 10, menuY - menuHeight/2 + 10, menuWidth - 20, menuHeight - 20, 5);
+                menuBoard.setDepth(10);
+                
+                const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🍵 抹茶ラテ ¥480', {
+                    fontSize: '14px',
+                    fill: '#FFFFFF',
+                    align: 'center',
+                    fontFamily: 'Noto Sans JP',
+                    lineSpacing: 5
+                });
+                menuText.setOrigin(0.5);
+                menuText.setDepth(15);
+                
+                // 日付ポスター
+                const today = new Date();
+                const dateStr = today.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                
+                const dateX = 150;
+                const dateY = 80;
+                const datePoster = this.add.graphics();
+                datePoster.fillStyle(0xFFFFFF);
+                datePoster.fillRoundedRect(dateX - 80, dateY - 40, 160, 80, 10);
+                datePoster.fillStyle(0x8B4513);
+                datePoster.fillRoundedRect(dateX - 75, dateY - 35, 150, 70, 5);
+                datePoster.setDepth(10);
+                
+                const dateText = this.add.text(dateX, dateY, `📅 ${dateStr}`, {
+                    fontSize: '12px',
+                    fill: '#FFFFFF',
+                    align: 'center',
+                    fontFamily: 'Noto Sans JP',
+                    wordWrap: { width: 140 }
+                });
+                dateText.setOrigin(0.5);
+                dateText.setDepth(15);
+                
+                // 装飾要素
+                for (let i = 0; i < 5; i++) {
+                    const x = 200 + Math.random() * (width - 400);
+                    const y = height - 180 + Math.random() * 50;
+                    this.createBook(x, y);
+                }
+                
+                for (let i = 0; i < 3; i++) {
+                    const x = 200 + i * (width - 400) / 2;
+                    const light = this.add.ellipse(x, 30, 60, 20, 0xFFFACD, 0.6);
+                    light.setDepth(-50);
+                }
+            };
+            
+            Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
+                const shelf = this.add.graphics();
+                shelf.fillStyle(0x8B4513);
+                shelf.fillRect(x, y, width, height);
+                shelf.fillStyle(0xA0522D);
+                shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
+                
+                const shelfCount = 6;
+                for (let i = 1; i < shelfCount; i++) {
+                    const shelfY = y + (height / shelfCount) * i;
+                    shelf.fillStyle(0x8B4513);
+                    shelf.fillRect(x, shelfY - 3, width, 6);
+                }
+                shelf.setDepth(5);
+                
+                for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
+                    const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
+                    const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
+                    const bookHeight = shelfBottom - shelfTop - 5;
+                    
+                    let bookX = x + 10;
+                    while (bookX < x + width - 20) {
+                        const bookWidth = 8 + Math.random() * 12;
+                        const bookColor = this.getRandomBookColor();
+                        
+                        this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, bookWidth, bookHeight, bookColor);
+                        this.add.rectangle(bookX + bookWidth/2, shelfTop + bookHeight/2, 1, bookHeight, 0x000000);
+                        
+                        bookX += bookWidth + 2;
+                    }
+                }
+            };
+            
+            Phaser.Scene.prototype.getRandomBookColor = function() {
+                const colors = [0x8B0000, 0x006400, 0x4B0082, 0x8B4513, 0x2F4F4F, 0x800080, 0x008080, 0xB8860B];
+                return colors[Math.floor(Math.random() * colors.length)];
+            };
+            
+            Phaser.Scene.prototype.createBook = function(x, y) {
+                const book = this.add.graphics();
+                book.fillStyle(this.getRandomBookColor());
+                book.fillRoundedRect(x, y, 25, 35, 3);
+                book.fillStyle(0x000000);
+                book.fillRect(x + 2, y + 2, 21, 2);
+                book.setDepth(-10);
+            };
+
+            function setupFirebaseConnection() {
+                const userRef = ref(database, `users/${state.deviceId}`);
+                const playersRef = ref(database, 'players');
+                const messagesRef = ref(database, 'messages');
+                const reactionsRef = ref(database, 'reactions');
+                
+                set(userRef, {
+                    playerId: state.playerId,
+                    deviceId: state.deviceId,
+                    userName: state.userName,
+                    timestamp: Date.now()
+                });
+                
+                const playerRef = ref(database, `players/${state.playerId}`);
+                set(playerRef, {
+                    x: player.x,
+                    y: player.y,
+                    mugColor: state.selectedMugColor,
+                    deviceId: state.deviceId,
+                    userName: state.userName,
+                    timestamp: Date.now()
+                });
+                
+                onDisconnect(playerRef).remove();
+                onDisconnect(userRef).remove();
+                
+                onValue(playersRef, (snapshot) => {
+                    const players = snapshot.val();
+                    const uniqueDevices = new Set();
+                    
+                    if (players) {
+                        Object.values(players).forEach(player => {
+                            if (player.deviceId) {
+                                uniqueDevices.add(player.deviceId);
+                            }
+                        });
+                    }
+                    
+                    elements.userCount.textContent = uniqueDevices.size;
+                    
+                    if (players) {
+                        Object.keys(players).forEach(id => {
+                            if (id !== state.playerId) {
+                                updateOtherPlayer.call(state.gameScene, id, players[id]);
+                            }
+                        });
+                        
+                        Object.keys(otherPlayers).forEach(id => {
+                            if (!players[id]) {
+                                if (otherPlayers[id]) {
+                                    otherPlayers[id].destroy();
+                                    delete otherPlayers[id];
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                onValue(messagesRef, (snapshot) => {
+                    const messages = snapshot.val();
+                    if (messages) {
+                        const messageArray = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
+                        displayMessages(messageArray);
+                    }
+                });
+                
+                onValue(reactionsRef, (snapshot) => {
+                    const reactions = snapshot.val();
+                    if (reactions) {
+                        Object.values(reactions).forEach(reaction => {
+                            if (reaction.playerId !== state.playerId && Date.now() - reaction.timestamp < 5000) {
+                                showReactionAnimation(reaction);
+                            }
+                        });
+                    }
+                });
+            }
+
+            function updateOtherPlayer(id, data) {
+                if (!otherPlayers[id]) {
+                    const mugColorIndex = MUG_COLORS.findIndex(m => m.color === data.mugColor) || 0;
+                    
+                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
+                    otherPlayers[id].setScale(1.0);
+                    otherPlayers[id].setAlpha(0.9);
+                    otherPlayers[id].setDepth(200);
+                    otherPlayers[id].userName = data.userName || 'ゲスト';
+                } else {
+                    otherPlayers[id].x = data.x;
+                    otherPlayers[id].y = data.y;
+                    otherPlayers[id].userName = data.userName || 'ゲスト';
+                }
+            }
+
+            function update() {
+                const speed = 3;
+                let moved = false;
+                const gameWidth = this.cameras.main.width;
+                
+                if (cursors.left.isDown && player.x > 50) {
+                    player.x -= speed;
+                    moved = true;
+                }
+                if (cursors.right.isDown && player.x < gameWidth - 50) {
+                    player.x += speed;
+                    moved = true;
+                }
+                
+                if (moved) {
+                    const playerRef = ref(database, `players/${state.playerId}`);
+                    set(playerRef, {
+                        x: player.x,
+                        y: player.y,
+                        mugColor: state.selectedMugColor,
+                        deviceId: state.deviceId,
+                        userName: state.userName,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+
+            function resize(gameSize) {
+                this.cameras.resize(gameSize.width, gameSize.height);
+            }
+
+            state.gameInstance = new Phaser.Game(config);
+        }
+
+        // チャット機能
+        function setupChat() {
+            const chatInput = elements.chatInput;
+            const reactionButtons = elements.reactionButtons;
+            
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && chatInput.value.trim()) {
+                        sendMessage(chatInput.value.trim());
+                        chatInput.value = '';
+                    }
+                });
+            }
+            
+            if (reactionButtons) {
+                reactionButtons.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('reaction-btn')) {
+                        const reaction = e.target.getAttribute('data-reaction');
+                        sendReaction(reaction);
+                    }
+                });
+            }
+        }
+        
+        function sendMessage(text) {
+            const messagesRef = ref(database, 'messages');
+            const messageRef = push(messagesRef);
+            
+            set(messageRef, {
+                playerId: state.playerId,
+                userName: state.userName,
+                text: text,
+                timestamp: Date.now(),
+                mugColor: state.selectedMugColor
+            });
+            
+            showSpeechBubble(text);
+        }
+        
+        function sendReaction(emoji) {
+            const reactionsRef = ref(database, 'reactions');
+            const reactionRef = push(reactionsRef);
+            
+            set(reactionRef, {
+                playerId: state.playerId,
+                userName: state.userName,
+                emoji: emoji,
+                timestamp: Date.now(),
+                mugColor: state.selectedMugColor
+            });
+            
+            showLocalReactionAnimation(emoji);
+        }
+        
+        function showSpeechBubble(text) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const bubble = document.createElement('div');
+            bubble.className = 'speech-bubble';
+            bubble.textContent = text;
+            
+            const player = state.gameScene.sys.game.scene.scenes[0].children.list.find(obj => obj.playerId === state.playerId);
+            if (player) {
+                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 50));
+                const y = Math.max(10, player.y - 80);
+                
+                bubble.style.left = x + 'px';
+                bubble.style.top = y + 'px';
+            }
+            
+            gameArea.appendChild(bubble);
+            state.speechBubbles.push(bubble);
+            
+            setTimeout(() => {
+                bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                    const index = state.speechBubbles.indexOf(bubble);
+                    if (index > -1) {
+                        state.speechBubbles.splice(index, 1);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        function showLocalReactionAnimation(emoji) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = emoji;
+            
+            const player = state.gameScene.sys.game.scene.scenes[0].children.list.find(obj => obj.playerId === state.playerId);
+            if (player) {
+                const x = player.x - 12;
+                const y = player.y - 50;
+                
+                reaction.style.left = x + 'px';
+                reaction.style.top = y + 'px';
+            }
+            
+            gameArea.appendChild(reaction);
+            state.reactionAnimations.push(reaction);
+            
+            setTimeout(() => {
+                if (reaction.parentNode) {
+                    reaction.parentNode.removeChild(reaction);
+                }
+                const index = state.reactionAnimations.indexOf(reaction);
+                if (index > -1) {
+                    state.reactionAnimations.splice(index, 1);
+                }
+            }, 3000);
+        }
+        
+        function showReactionAnimation(reactionData) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = reactionData.emoji;
+            
+            const otherPlayer = state.gameScene.sys.game.scene.scenes[0].children.list.find(obj => 
+                obj.texture && obj.texture.key.startsWith('mug-')
+            );
+            
+            if (otherPlayer) {
+                const x = otherPlayer.x - 12;
+                const y = otherPlayer.y - 50;
+                
+                reaction.style.left = x + 'px';
+                reaction.style.top = y + 'px';
+            } else {
+                reaction.style.left = (Math.random() * (gameArea.clientWidth - 50)) + 'px';
+                reaction.style.top = (gameArea.clientHeight - 200 + Math.random() * 50) + 'px';
+            }
+            
+            gameArea.appendChild(reaction);
+            
+            setTimeout(() => {
+                if (reaction.parentNode) {
+                    reaction.parentNode.removeChild(reaction);
+                }
+            }, 3000);
+        }
+        
+        function displayMessages(messages) {
+            const chatMessages = elements.chatMessages;
+            chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div></div>';
+            
+            messages.slice(-20).forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                
+                const author = document.createElement('div');
+                author.className = 'message-author';
+                author.textContent = `🦔 ${message.userName || 'ゲスト'}`;
+                author.style.color = message.mugColor || '#8B4513';
+                
+                const text = document.createElement('div');
+                text.className = 'message-text';
+                text.textContent = message.text;
+                
+                messageDiv.appendChild(author);
+                messageDiv.appendChild(text);
+                chatMessages.appendChild(messageDiv);
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // イベントリスナー設定
+        function setupEventListeners() {
+            // 名前入力フィールド
+            const nameInput = elements.nameInput;
+            if (nameInput) {
+                nameInput.addEventListener('input', updateNameButton);
+                nameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && nameInput.value.trim()) {
+                        goToMugSelection();
+                    }
+                });
+            }
+            
+            // リサイズイベント
+            window.addEventListener('resize', () => {
+                if (state.gameInstance) {
+                    const gameArea = elements.gameArea;
+                    state.gameInstance.scale.resize(gameArea.clientWidth, gameArea.clientHeight);
+                }
+            });
+        }
+
+        // メイン初期化
+        function initialize() {
+            if (state.isInitialized) {
+                console.log('🚫 Already initialized, skipping...');
+                return;
+            }
+            
+            console.log('🦔 Initializing Harinezumi Cafe...');
+            
+            if (!checkCompanyAccess()) {
+                return;
+            }
+            
+            setupEventListeners();
+            
+            if (checkExistingSession()) {
+                console.log('📱 Existing session found - going to game');
+            } else {
+                console.log('🆕 New session - showing name input');
+                showNameScreen();
+            }
+            
+            state.isInitialized = true;
+            console.log('✅ Initialization complete');
+        }
+
+        // グローバル関数として公開
+        window.goToMugSelection = goToMugSelection;
+        window.startGame = startGame;
+        window.selectMug = selectMug;
+        window.sendReaction = sendReaction;
+
+        // DOM読み込み完了後に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+        
+        console.log('🦔 Harinezumi Cafe script loaded');
+    </script>
+</body>
+</html>
