@@ -413,8 +413,68 @@
             return id;
         }
         
+        // 会社コードの確認
+        function checkCompanyAccess() {
+            const COMPANY_CODE = "HarinezumiCafe"; // 会社固有のコードに変更してください
+            let entryCode = localStorage.getItem('company-entry-code');
+            
+            if (!entryCode || entryCode !== COMPANY_CODE) {
+                entryCode = prompt('🔐 会社アクセスコードを入力してください:\n\n※このアプリは社内利用限定です');
+                
+                if (!entryCode || entryCode !== COMPANY_CODE) {
+                    alert('❌ アクセスが許可されていません。\n正しいアクセスコードを入力してください。');
+                    // ページを閉じるか、アクセス拒否ページにリダイレクト
+                    document.body.innerHTML = `
+                        <div style="
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            background: #f0f0f0;
+                            font-family: 'Noto Sans JP', sans-serif;
+                            text-align: center;
+                        ">
+                            <div style="
+                                background: white;
+                                padding: 40px;
+                                border-radius: 15px;
+                                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                                max-width: 400px;
+                            ">
+                                <h2 style="color: #8B4513; margin-bottom: 20px;">🔒 アクセス制限</h2>
+                                <p style="color: #666; margin-bottom: 20px;">
+                                    このアプリケーションは社内利用限定です。<br>
+                                    正しいアクセスコードをお持ちの方のみご利用いただけます。
+                                </p>
+                                <button onclick="location.reload()" style="
+                                    background: #8B4513;
+                                    color: white;
+                                    border: none;
+                                    padding: 12px 24px;
+                                    border-radius: 25px;
+                                    cursor: pointer;
+                                    font-size: 14px;
+                                ">再試行</button>
+                            </div>
+                        </div>
+                    `;
+                    return false;
+                }
+                
+                localStorage.setItem('company-entry-code', entryCode);
+                alert('✅ アクセスが承認されました。ハリネズミカフェへようこそ！');
+            }
+            
+            return true;
+        }
+
         // 既存セッションチェック
         function checkExistingSession() {
+            // まず会社コードチェック
+            if (!checkCompanyAccess()) {
+                return false;
+            }
+            
             const existingPlayerId = localStorage.getItem('player-id');
             const existingName = localStorage.getItem('user-name');
             const existingMugColor = localStorage.getItem('mug-color');
@@ -510,6 +570,11 @@
         }
         
         function startGame() {
+            // 会社コードチェック
+            if (!checkCompanyAccess()) {
+                return;
+            }
+            
             const nameInput = document.getElementById('name-input');
             userName = nameInput.value.trim();
             
