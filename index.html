@@ -551,35 +551,70 @@
         // 画面制御
         function showNameScreen() {
             console.log('📝 Showing name input screen');
-            elements.loading.style.display = 'none';
-            elements.nameScreen.style.display = 'block';
-            elements.mugScreen.style.display = 'none';
-            elements.mainContainer.style.display = 'none';
+            
+            // 確実にローディングを非表示
+            if (elements.loading) {
+                elements.loading.style.display = 'none';
+                console.log('✅ Loading hidden');
+            }
+            
+            // 名前入力画面を表示
+            if (elements.nameScreen) {
+                elements.nameScreen.style.display = 'block';
+                console.log('✅ Name screen shown');
+            }
+            
+            // 他の画面を非表示
+            if (elements.mugScreen) elements.mugScreen.style.display = 'none';
+            if (elements.mainContainer) elements.mainContainer.style.display = 'none';
             
             // 名前入力にフォーカス
             setTimeout(() => {
-                elements.nameInput.focus();
-            }, 100);
+                if (elements.nameInput) {
+                    elements.nameInput.focus();
+                }
+            }, 200);
         }
 
         function showMugScreen() {
             console.log('☕ Showing mug selection screen');
-            elements.nameScreen.style.display = 'none';
-            elements.mugScreen.style.display = 'block';
-            elements.mainContainer.style.display = 'none';
+            
+            // 確実にローディングを非表示
+            if (elements.loading) {
+                elements.loading.style.display = 'none';
+                console.log('✅ Loading hidden in mug screen');
+            }
+            
+            // マグカップ選択画面を表示
+            if (elements.nameScreen) elements.nameScreen.style.display = 'none';
+            if (elements.mugScreen) {
+                elements.mugScreen.style.display = 'block';
+                console.log('✅ Mug screen shown');
+            }
+            if (elements.mainContainer) elements.mainContainer.style.display = 'none';
             
             // マグカップ選択肢を生成
-            generateMugOptions();
+            setTimeout(() => {
+                generateMugOptions();
+            }, 100);
         }
 
         function showGameScreen() {
             console.log('🎮 Showing game screen');
-            elements.nameScreen.style.display = 'none';
-            elements.mugScreen.style.display = 'none';
-            elements.mainContainer.style.display = 'flex';
             
-            initializeGame();
-            setupChat();
+            // 全ての画面を非表示
+            if (elements.loading) elements.loading.style.display = 'none';
+            if (elements.nameScreen) elements.nameScreen.style.display = 'none';
+            if (elements.mugScreen) elements.mugScreen.style.display = 'none';
+            
+            // ゲーム画面を表示
+            if (elements.mainContainer) elements.mainContainer.style.display = 'flex';
+            
+            // ゲーム初期化
+            setTimeout(() => {
+                initializeGame();
+                setupChat();
+            }, 100);
         }
 
         // 名前入力からマグカップ選択へ
@@ -674,10 +709,17 @@
             const existingMugColor = localStorage.getItem('mug-color');
             
             if (existingPlayerId && existingName && existingMugColor) {
+                console.log('📱 Existing session found:', { existingName, existingMugColor });
+                
                 state.playerId = existingPlayerId;
                 state.userName = existingName;
                 state.selectedMugColor = existingMugColor;
                 state.currentStep = 'game';
+                
+                // 確実にローディングを非表示にしてゲーム画面へ
+                if (elements.loading) {
+                    elements.loading.style.display = 'none';
+                }
                 
                 showGameScreen();
                 return true;
@@ -757,7 +799,7 @@
                 tableGraphics.generateTexture('cafe-table', 800, 120);
                 tableGraphics.destroy();
 
-                // マグカップテクスチャ生成
+                // マグカップテクスチャ生成（画面外で生成して表示されないように）
                 MUG_COLORS.forEach((mug, index) => {
                     this.createMugTexture(mug.color, `mug-${index}`);
                 });
@@ -767,26 +809,35 @@
             }
             
             Phaser.Scene.prototype.createMugTexture = function(color, key) {
-                const tempGraphics = this.add.graphics({ x: -1000, y: -1000 });
+                // 完全に画面外で生成（-2000, -2000の位置）
+                const tempGraphics = this.add.graphics({ x: -2000, y: -2000, visible: false });
                 const colorInt = parseInt(color.replace('#', '0x'));
                 
-                // マグカップ描画
-                tempGraphics.fillStyle(colorInt);
-                tempGraphics.fillRoundedRect(0, 20, 40, 50, 20);
-                tempGraphics.lineStyle(4, 0x8B4513);
-                tempGraphics.strokeCircle(45, 35, 12);
-                tempGraphics.fillStyle(0x8B4513);
-                tempGraphics.fillEllipse(20, 25, 40, 10);
-                tempGraphics.fillStyle(0x3E2723);
-                tempGraphics.fillEllipse(20, 25, 35, 8);
-                tempGraphics.fillStyle(0xFFFFFF);
-                tempGraphics.fillCircle(15, 15, 2);
-                tempGraphics.fillCircle(20, 10, 2);
-                tempGraphics.fillCircle(25, 15, 2);
-                tempGraphics.fillCircle(30, 8, 2);
-                
-                tempGraphics.generateTexture(key, 60, 80);
-                tempGraphics.destroy();
+                try {
+                    // マグカップ描画
+                    tempGraphics.fillStyle(colorInt);
+                    tempGraphics.fillRoundedRect(0, 20, 40, 50, 20);
+                    tempGraphics.lineStyle(4, 0x8B4513);
+                    tempGraphics.strokeCircle(45, 35, 12);
+                    tempGraphics.fillStyle(0x8B4513);
+                    tempGraphics.fillEllipse(20, 25, 40, 10);
+                    tempGraphics.fillStyle(0x3E2723);
+                    tempGraphics.fillEllipse(20, 25, 35, 8);
+                    tempGraphics.fillStyle(0xFFFFFF);
+                    tempGraphics.fillCircle(15, 15, 2);
+                    tempGraphics.fillCircle(20, 10, 2);
+                    tempGraphics.fillCircle(25, 15, 2);
+                    tempGraphics.fillCircle(30, 8, 2);
+                    
+                    // テクスチャ生成後即座に削除
+                    tempGraphics.generateTexture(key, 60, 80);
+                    tempGraphics.destroy();
+                } catch (error) {
+                    console.warn('Mug texture creation error:', error);
+                    if (tempGraphics) {
+                        tempGraphics.destroy();
+                    }
+                }
             };
 
             function create() {
@@ -828,25 +879,26 @@
                 this.createBookshelf(50, 50, 120, height - 200);
                 this.createBookshelf(width - 170, 50, 120, height - 200);
                 
-                // メニューボード（大きめに修正）
-                const menuX = width - 300;
-                const menuY = 140;
-                const menuWidth = 220;
-                const menuHeight = 240;
+                // メニューボード（さらに大きく修正）
+                const menuX = width - 350;
+                const menuY = 160;
+                const menuWidth = 280;
+                const menuHeight = 300;
                 
                 const menuBoard = this.add.graphics();
                 menuBoard.fillStyle(0x4A4A4A);
-                menuBoard.fillRoundedRect(menuX - menuWidth/2, menuY - menuHeight/2, menuWidth, menuHeight, 10);
+                menuBoard.fillRoundedRect(menuX - menuWidth/2, menuY - menuHeight/2, menuWidth, menuHeight, 15);
                 menuBoard.fillStyle(0x2A2A2A);
-                menuBoard.fillRoundedRect(menuX - menuWidth/2 + 10, menuY - menuHeight/2 + 10, menuWidth - 20, menuHeight - 20, 5);
+                menuBoard.fillRoundedRect(menuX - menuWidth/2 + 15, menuY - menuHeight/2 + 15, menuWidth - 30, menuHeight - 30, 10);
                 menuBoard.setDepth(10);
                 
                 const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🍵 抹茶ラテ ¥480\n🧁 ハリネズミケーキ ¥520', {
-                    fontSize: '16px',
+                    fontSize: '18px',
                     fill: '#FFFFFF',
                     align: 'center',
                     fontFamily: 'Noto Sans JP',
-                    lineSpacing: 8
+                    lineSpacing: 10,
+                    wordWrap: { width: menuWidth - 40 }
                 });
                 menuText.setOrigin(0.5);
                 menuText.setDepth(15);
