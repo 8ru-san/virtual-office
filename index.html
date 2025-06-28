@@ -419,7 +419,8 @@
             speechBubbles: [],
             reactionAnimations: [],
             isInitialized: false,
-            currentStep: 'name'
+            currentStep: 'name',
+            sessionStartTime: Date.now() // セッション開始時刻を記録
         };
 
         // DOM要素取得
@@ -533,6 +534,9 @@
             if (elements.nameScreen) elements.nameScreen.style.display = 'none';
             if (elements.mugScreen) elements.mugScreen.style.display = 'none';
             if (elements.mainContainer) elements.mainContainer.style.display = 'flex';
+            
+            // セッション開始時刻を更新
+            state.sessionStartTime = Date.now();
             
             setTimeout(() => {
                 initializeGame();
@@ -804,11 +808,11 @@
                     this.createBookshelf(50, 50, 120, height - 200);
                     this.createBookshelf(width - 170, 50, 120, height - 200);
                     
-                    // メニューボード（右上、大きめに修正）
+                    // メニューボード（右上、修正版）
                     const menuX = width - 200;
                     const menuY = 160;
-                    const menuWidth = 300;
-                    const menuHeight = 320;
+                    const menuWidth = 280;
+                    const menuHeight = 280;
                     
                     const menuBoard = this.add.graphics();
                     menuBoard.fillStyle(0x4A4A4A);
@@ -817,12 +821,12 @@
                     menuBoard.fillRoundedRect(menuX - menuWidth/2 + 15, menuY - menuHeight/2 + 15, menuWidth - 30, menuHeight - 30, 10);
                     menuBoard.setDepth(10);
                     
-                    const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🍵 抹茶ラテ ¥480\n🧁 ハリネズミケーキ ¥520', {
-                        fontSize: '18px',
+                    const menuText = this.add.text(menuX, menuY, 'MENU\n\n☕ コーヒー ¥400\n🥐 クロワッサン ¥300\n🍰 チーズケーキ ¥450\n📚 本の貸出 無料\n\n今日のおすすめ\n🧁 ハリネズミケーキ ¥520', {
+                        fontSize: '16px',
                         fill: '#FFFFFF',
                         align: 'center',
                         fontFamily: 'Noto Sans JP',
-                        lineSpacing: 10,
+                        lineSpacing: 8,
                         wordWrap: { width: menuWidth - 40 }
                     });
                     menuText.setOrigin(0.5);
@@ -856,13 +860,9 @@
                     dateText.setOrigin(0.5);
                     dateText.setDepth(15);
                     
-                    // 装飾要素
-                    for (let i = 0; i < 5; i++) {
-                        const x = 200 + Math.random() * (width - 400);
-                        const y = height - 180 + Math.random() * 50;
-                        this.createBook(x, y);
-                    }
+                    // 装飾要素（本の配置を削除して黒い四角を除去）
                     
+                    // 照明効果のみ残す
                     for (let i = 0; i < 3; i++) {
                         const x = 200 + i * (width - 400) / 2;
                         const light = this.add.ellipse(x, 30, 60, 20, 0xFFFACD, 0.6);
@@ -913,19 +913,6 @@
             Phaser.Scene.prototype.getRandomBookColor = function() {
                 const colors = [0x8B0000, 0x006400, 0x4B0082, 0x8B4513, 0x2F4F4F, 0x800080, 0x008080, 0xB8860B];
                 return colors[Math.floor(Math.random() * colors.length)];
-            };
-            
-            Phaser.Scene.prototype.createBook = function(x, y) {
-                try {
-                    const book = this.add.graphics();
-                    book.fillStyle(this.getRandomBookColor());
-                    book.fillRoundedRect(x, y, 25, 35, 3);
-                    book.fillStyle(0x000000);
-                    book.fillRect(x + 2, y + 2, 21, 2);
-                    book.setDepth(-10);
-                } catch (error) {
-                    console.warn('Book creation error:', error);
-                }
             };
 
             function setupFirebaseConnection() {
@@ -993,18 +980,17 @@
                         }
                     });
                     
+                    // メッセージ監視（セッション開始時刻以降のメッセージのみ表示）
                     onValue(messagesRef, (snapshot) => {
                         try {
                             const messages = snapshot.val();
                             if (messages) {
-                                const today = new Date();
-                                const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-                                
-                                const todayMessages = Object.values(messages)
-                                    .filter(message => message.timestamp >= todayStart)
+                                // セッション開始時刻以降のメッセージのみフィルタリング
+                                const sessionMessages = Object.values(messages)
+                                    .filter(message => message.timestamp >= state.sessionStartTime)
                                     .sort((a, b) => a.timestamp - b.timestamp);
                                 
-                                displayMessages(todayMessages);
+                                displayMessages(sessionMessages);
                             } else {
                                 displayMessages([]);
                             }
