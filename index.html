@@ -537,10 +537,18 @@
             
             // セッション開始時刻を更新
             state.sessionStartTime = Date.now();
+            console.log('⏰ Session start time set:', new Date(state.sessionStartTime));
             
+            // 少し遅延してから初期化
             setTimeout(() => {
+                console.log('🎯 Initializing game and chat...');
                 initializeGame();
-                setupChat();
+                
+                // ゲーム初期化後にチャット設定
+                setTimeout(() => {
+                    setupChat();
+                    console.log('✅ Game screen setup completed');
+                }, 500);
             }, 100);
         }
 
@@ -917,18 +925,29 @@
 
             function setupFirebaseConnection() {
                 try {
+                    console.log('🔥 Setting up Firebase connection...');
+                    console.log('Player ID:', state.playerId);
+                    console.log('Device ID:', state.deviceId);
+                    console.log('User Name:', state.userName);
+                    
                     const userRef = ref(database, `users/${state.deviceId}`);
                     const playersRef = ref(database, 'players');
                     const messagesRef = ref(database, 'messages');
                     const reactionsRef = ref(database, 'reactions');
                     
+                    // ユーザー情報を設定
                     set(userRef, {
                         playerId: state.playerId,
                         deviceId: state.deviceId,
                         userName: state.userName,
                         timestamp: Date.now()
+                    }).then(() => {
+                        console.log('✅ User data set successfully');
+                    }).catch((error) => {
+                        console.error('❌ Failed to set user data:', error);
                     });
                     
+                    // プレイヤー情報を設定
                     const playerRef = ref(database, `players/${state.playerId}`);
                     set(playerRef, {
                         x: player.x,
@@ -937,11 +956,17 @@
                         deviceId: state.deviceId,
                         userName: state.userName,
                         timestamp: Date.now()
+                    }).then(() => {
+                        console.log('✅ Player data set successfully');
+                    }).catch((error) => {
+                        console.error('❌ Failed to set player data:', error);
                     });
                     
+                    // 切断時の処理
                     onDisconnect(playerRef).remove();
                     onDisconnect(userRef).remove();
                     
+                    // プレイヤー監視
                     onValue(playersRef, (snapshot) => {
                         try {
                             const players = snapshot.val();
@@ -955,8 +980,9 @@
                                 });
                             }
                             
-                            if (elements.userCount) {
-                                elements.userCount.textContent = uniqueDevices.size;
+                            const userCountElement = document.getElementById('user-count');
+                            if (userCountElement) {
+                                userCountElement.textContent = uniqueDevices.size;
                             }
                             
                             if (players) {
@@ -983,6 +1009,7 @@
                     // メッセージ監視（セッション開始時刻以降のメッセージのみ表示）
                     onValue(messagesRef, (snapshot) => {
                         try {
+                            console.log('📨 Messages updated');
                             const messages = snapshot.val();
                             if (messages) {
                                 // セッション開始時刻以降のメッセージのみフィルタリング
@@ -990,15 +1017,20 @@
                                     .filter(message => message.timestamp >= state.sessionStartTime)
                                     .sort((a, b) => a.timestamp - b.timestamp);
                                 
+                                console.log('Session messages:', sessionMessages.length);
                                 displayMessages(sessionMessages);
                             } else {
+                                console.log('No messages found');
                                 displayMessages([]);
                             }
                         } catch (error) {
-                            console.warn('Messages update error:', error);
+                            console.error('❌ Messages update error:', error);
                         }
+                    }, (error) => {
+                        console.error('❌ Messages listener error:', error);
                     });
                     
+                    // リアクション監視
                     onValue(reactionsRef, (snapshot) => {
                         try {
                             const reactions = snapshot.val();
@@ -1013,8 +1045,10 @@
                             console.warn('Reactions update error:', error);
                         }
                     });
+                    
+                    console.log('✅ Firebase connection setup completed');
                 } catch (error) {
-                    console.warn('Firebase setup error:', error);
+                    console.error('❌ Firebase setup error:', error);
                 }
             }
 
@@ -1083,38 +1117,90 @@
         // チャット機能
         function setupChat() {
             try {
-                const chatInput = elements.chatInput;
-                const reactionButtons = elements.reactionButtons;
+                console.log('🔧 Setting up chat functionality...');
+                
+                // DOM要素の確認
+                const chatInput = document.getElementById('chat-input');
+                const reactionButtons = document.querySelector('.reaction-buttons');
+                
+                console.log('Chat input element:', chatInput);
+                console.log('Reaction buttons element:', reactionButtons);
                 
                 if (chatInput) {
-                    chatInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter' && chatInput.value.trim()) {
-                            const message = chatInput.value.trim();
-                            sendMessage(message);
-                            chatInput.value = '';
-                        }
-                    });
+                    // 既存のイベントリスナーを削除
+                    chatInput.removeEventListener('keypress', handleChatKeypress);
+                    
+                    // 新しいイベントリスナーを追加
+                    chatInput.addEventListener('keypress', handleChatKeypress);
+                    console.log('✅ Chat input listener added');
+                } else {
+                    console.error('❌ Chat input element not found');
                 }
                 
                 if (reactionButtons) {
-                    reactionButtons.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('reaction-btn')) {
-                            const reaction = e.target.getAttribute('data-reaction');
-                            sendReaction(reaction);
-                        }
-                    });
+                    // 既存のイベントリスナーを削除
+                    reactionButtons.removeEventListener('click', handleReactionClick);
+                    
+                    // 新しいイベントリスナーを追加
+                    reactionButtons.addEventListener('click', handleReactionClick);
+                    console.log('✅ Reaction buttons listener added');
+                } else {
+                    console.error('❌ Reaction buttons element not found');
                 }
                 
                 // 初期メッセージ表示
                 displayMessages([]);
+                console.log('✅ Chat setup completed');
             } catch (error) {
-                console.warn('Chat setup error:', error);
+                console.error('❌ Chat setup error:', error);
+            }
+        }
+        
+        // チャット入力ハンドラー
+        function handleChatKeypress(e) {
+            try {
+                console.log('Key pressed:', e.key);
+                if (e.key === 'Enter') {
+                    const message = e.target.value.trim();
+                    console.log('Message to send:', message);
+                    
+                    if (message) {
+                        sendMessage(message);
+                        e.target.value = '';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Chat keypress error:', error);
+            }
+        }
+        
+        // リアクションクリックハンドラー
+        function handleReactionClick(e) {
+            try {
+                if (e.target.classList.contains('reaction-btn')) {
+                    const reaction = e.target.getAttribute('data-reaction');
+                    console.log('Reaction clicked:', reaction);
+                    sendReaction(reaction);
+                }
+            } catch (error) {
+                console.error('❌ Reaction click error:', error);
             }
         }
         
         function sendMessage(text) {
             try {
-                if (!text || !text.trim()) return;
+                console.log('🚀 Attempting to send message:', text);
+                
+                if (!text || !text.trim()) {
+                    console.warn('❌ Empty message, not sending');
+                    return;
+                }
+                
+                if (!state.playerId || !state.userName) {
+                    console.error('❌ Player not initialized');
+                    alert('プレイヤー情報が初期化されていません。ページを再読み込みしてください。');
+                    return;
+                }
                 
                 const messagesRef = ref(database, 'messages');
                 const messageRef = push(messagesRef);
@@ -1127,17 +1213,23 @@
                     mugColor: state.selectedMugColor
                 };
                 
-                console.log('📤 Sending message:', messageData);
+                console.log('📤 Sending message data:', messageData);
                 
                 set(messageRef, messageData).then(() => {
                     console.log('✅ Message sent successfully');
                     showSpeechBubble(text);
                 }).catch((error) => {
                     console.error('❌ Message send failed:', error);
-                    alert('メッセージの送信に失敗しました。再試行してください。');
+                    // Firebase接続エラーの場合の詳細表示
+                    if (error.code) {
+                        console.error('Error code:', error.code);
+                        console.error('Error message:', error.message);
+                    }
+                    alert('メッセージの送信に失敗しました。ネットワーク接続を確認してください。');
                 });
             } catch (error) {
-                console.warn('Send message error:', error);
+                console.error('❌ Send message error:', error);
+                alert('メッセージ送信中にエラーが発生しました。');
             }
         }
         
